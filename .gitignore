@@ -2,3 +2,13 @@ bin/*
 lib/*
 tmp/*
 log/*
+
+Debug/*
+Release/*
+RelWithDebInfo/*
+MinSizeRel/*
+
+cmake-build/*
+build/*
+
+cmake/CMakeLists.txt.u*

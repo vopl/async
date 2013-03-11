@@ -6,11 +6,13 @@ project(${PROJECT})
 
 set(INC
 	${PINC}/threadUtilizer.hpp
+	${PINC}/threadPool.hpp
 )
 source_group(include FILES ${INC})
 
 set(SRC
 	${PSRC}/threadUtilizer.cpp
+	${PSRC}/threadPool.cpp
 )
 source_group(src FILES ${SRC})
 
