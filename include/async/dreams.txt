@@ -1,0 +1,16 @@
+
+user
+    specify threads
+    specify fibers
+    provide tasks
+    control tasks execution
+
+
+code
+    force thread affinity
+    use thread/fiber local storages
+    schedule itself (yield, sync)
+    provide state to task (progress, stop, result, throw)
+    provide tasks
+    control tasks execution
+

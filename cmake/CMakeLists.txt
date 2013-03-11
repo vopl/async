@@ -1,0 +1,64 @@
+
+
+if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/local.cmake")
+	message(STATUS "${CMAKE_CURRENT_BINARY_DIR}/local.cmake found, do inclusion")
+	include("${CMAKE_CURRENT_BINARY_DIR}/local.cmake")
+endif()
+
+
+if(NOT CMAKE_BUILD_TYPE)
+#    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "build type")
+endif()
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+cmake_minimum_required(VERSION 2.6)
+
+project(async)
+
+#message(${CMAKE_BUILD_TYPE})
+
+set(TOPDIR ${CMAKE_SOURCE_DIR}/..)
+get_filename_component(TOPDIR ${TOPDIR} ABSOLUTE)
+set(SRCDIR ${TOPDIR}/src)
+set(INCDIR ${TOPDIR}/include)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TOPDIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${TOPDIR}/Release)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${TOPDIR}/RelWithDebInfo)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${TOPDIR}/MinSizeRel)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${TOPDIR}/Debug)
+
+set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/include ${CMAKE_MODULE_PATH})
+
+INCLUDE_DIRECTORIES(${INCDIR})
+INCLUDE_DIRECTORIES(${SRCDIR})
+
+#######################################################################################
+IF(MSVC)
+	SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ot /Og /Oi /Ox /Oy /GL /Zi")
+	SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /DEBUG")
+	SET(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /LTCG /DEBUG")
+	SET(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG /DEBUG")
+ENDIF(MSVC)
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
+    #SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11")
+endif()
+
+add_definitions(-D_REENTRANT)
+add_definitions(-D_THREAD_SAFE)
+
+include(pch.cmake)
+if(MSVC)
+	add_definitions(-D_WIN32_WINNT=0x0501)
+	add_definitions(-DNOMINMAX)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+endif()
+
+add_subdirectory(app)
+add_subdirectory(lib)
+
