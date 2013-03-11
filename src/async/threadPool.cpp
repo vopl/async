@@ -3,13 +3,13 @@
 
 namespace async
 {
-    ThreadPool::ThreadPool(async::ThreadUtilizer &tu, size_t amount)
+    ThreadPool::ThreadPool(const async::ThreadUtilizer &tu, size_t amount)
         : _tu(tu)
     {
         _threads.resize(amount);
         for(std::thread &thread: _threads)
         {
-            thread = std::thread([&tu]{tu.te_utilize();});
+            thread = std::thread([this]{_tu.te_utilize();});
         }
     }
 

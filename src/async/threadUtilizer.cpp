@@ -1,10 +1,21 @@
 #include "async/threadUtilizer.hpp"
+#include "async/schedulerImpl.hpp"
 #include <cassert>
 
 #include <mutex>
 
 namespace async
 {
+    ThreadUtilizer::ThreadUtilizer()
+        : _schedulerImpl(new SchedulerImpl)
+    {
+    }
+
+    ThreadUtilizer::ThreadUtilizer(const SchedulerImplPtr &schedulerImpl)
+        : _schedulerImpl(schedulerImpl)
+    {
+    }
+
     EThreadUtilizationResult ThreadUtilizer::te_utilize()
     {
         assert(0);

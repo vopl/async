@@ -21,10 +21,20 @@ namespace async
         etrr_notInWork
     };
 
+    class Scheduler;
+    class SchedulerImpl;
+    typedef std::shared_ptr<SchedulerImpl> SchedulerImplPtr;
+
     class ThreadUtilizer
     {
     public:
         typedef std::chrono::high_resolution_clock _clock;
+
+    public:
+        ThreadUtilizer();
+        ThreadUtilizer(const SchedulerImplPtr &schedulerImpl);
+
+        operator Scheduler();
 
     public:
         EThreadUtilizationResult te_utilize();
@@ -41,6 +51,9 @@ namespace async
 
         template<typename clock, typename duration>
         EThreadUtilizationResult te_utilize(const std::chrono::time_point<clock, duration> &atime);
+
+    private:
+        SchedulerImplPtr _schedulerImpl;
     };
 
 

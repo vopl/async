@@ -11,11 +11,11 @@ namespace async
     class ThreadPool
     {
     public:
-        ThreadPool(async::ThreadUtilizer &tu, size_t amount = std::thread::hardware_concurrency());
+        ThreadPool(const async::ThreadUtilizer &tu, size_t amount = std::thread::hardware_concurrency());
         ~ThreadPool();
 
     private:
-        async::ThreadUtilizer &_tu;
+        async::ThreadUtilizer _tu;
         std::vector<std::thread> _threads;
     };
 }

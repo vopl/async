@@ -1,5 +1,6 @@
 #include "async/threadUtilizer.hpp"
 #include "async/threadPool.hpp"
+#include "async/scheduler.hpp"
 #include <iostream>
 #include <thread>
 #include <cassert>
@@ -8,7 +9,8 @@
 
 int main()
 {
-    async::ThreadUtilizer tu;
+    async::Scheduler sched;
+    async::ThreadUtilizer tu(sched);
 
     if(0)
     {

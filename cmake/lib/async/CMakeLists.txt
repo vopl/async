@@ -7,12 +7,16 @@ project(${PROJECT})
 set(INC
 	${PINC}/threadUtilizer.hpp
 	${PINC}/threadPool.hpp
+    ${PINC}/scheduler.hpp
+    ${PSRC}/schedulerImpl.hpp
 )
 source_group(include FILES ${INC})
 
 set(SRC
 	${PSRC}/threadUtilizer.cpp
 	${PSRC}/threadPool.cpp
+    ${PSRC}/scheduler.cpp
+    ${PSRC}/schedulerImpl.cpp
 )
 source_group(src FILES ${SRC})
 
