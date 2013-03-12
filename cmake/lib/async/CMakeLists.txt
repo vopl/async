@@ -8,7 +8,7 @@ set(INC
 	${PINC}/threadUtilizer.hpp
 	${PINC}/threadPool.hpp
     ${PINC}/scheduler.hpp
-    ${PSRC}/schedulerImpl.hpp
+    ${PSRC}/impl/scheduler.hpp
 )
 source_group(include FILES ${INC})
 
@@ -16,7 +16,7 @@ set(SRC
 	${PSRC}/threadUtilizer.cpp
 	${PSRC}/threadPool.cpp
     ${PSRC}/scheduler.cpp
-    ${PSRC}/schedulerImpl.cpp
+    ${PSRC}/impl/scheduler.cpp
 )
 source_group(src FILES ${SRC})
 

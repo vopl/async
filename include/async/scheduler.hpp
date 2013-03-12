@@ -7,20 +7,23 @@ namespace async
 {
     class ThreadUtilizer;
 
-    class SchedulerImpl;
-    typedef std::shared_ptr<SchedulerImpl> SchedulerImplPtr;
+    namespace impl
+    {
+        class Scheduler;
+        typedef std::shared_ptr<Scheduler> SchedulerPtr;
+    }
 
     class Scheduler
     {
     public:
         Scheduler();
-        Scheduler(const SchedulerImplPtr &schedulerImpl);
+        Scheduler(const impl::SchedulerPtr &implScheduler);
         ~Scheduler();
 
         operator ThreadUtilizer();
 
     private:
-        const SchedulerImplPtr _schedulerImpl;
+        const impl::SchedulerPtr _implScheduler;
     };
 }
 

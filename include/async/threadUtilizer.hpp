@@ -22,8 +22,12 @@ namespace async
     };
 
     class Scheduler;
-    class SchedulerImpl;
-    typedef std::shared_ptr<SchedulerImpl> SchedulerImplPtr;
+
+    namespace impl
+    {
+        class Scheduler;
+        typedef std::shared_ptr<Scheduler> SchedulerPtr;
+    }
 
     class ThreadUtilizer
     {
@@ -32,7 +36,7 @@ namespace async
 
     public:
         ThreadUtilizer();
-        ThreadUtilizer(const SchedulerImplPtr &schedulerImpl);
+        ThreadUtilizer(const impl::SchedulerPtr &implScheduler);
 
         operator Scheduler();
 
@@ -53,7 +57,7 @@ namespace async
         EThreadUtilizationResult te_utilize(const std::chrono::time_point<clock, duration> &atime);
 
     private:
-        SchedulerImplPtr _schedulerImpl;
+        impl::SchedulerPtr _implScheduler;
     };
 
 

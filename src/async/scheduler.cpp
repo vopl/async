@@ -1,5 +1,5 @@
 #include "async/scheduler.hpp"
-#include "async/schedulerImpl.hpp"
+#include "async/impl/scheduler.hpp"
 #include "async/threadUtilizer.hpp"
 
 #include <cassert>
@@ -7,12 +7,12 @@
 namespace async
 {
     Scheduler::Scheduler()
-        : _schedulerImpl(new SchedulerImpl)
+        : _implScheduler(new impl::Scheduler)
     {
     }
 
-    Scheduler::Scheduler(const SchedulerImplPtr &schedulerImpl)
-        : _schedulerImpl(schedulerImpl)
+    Scheduler::Scheduler(const impl::SchedulerPtr &implScheduler)
+        : _implScheduler(implScheduler)
     {
 
     }
@@ -23,7 +23,7 @@ namespace async
 
     Scheduler::operator ThreadUtilizer()
     {
-        return ThreadUtilizer(_schedulerImpl);
+        return ThreadUtilizer(_implScheduler);
     }
 
 }
