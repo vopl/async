@@ -9,10 +9,9 @@ namespace async
 
     enum EThreadUtilizationResult
     {
-        etur_kernelStop,
         etur_limitExhausted,
         etur_releaseRequest,
-        etur_alreadyInWork  //was not be utilized
+        etur_notBeenUtilized  //was not be utilized
     };
 
     enum EThreadReleaseResult
@@ -43,7 +42,7 @@ namespace async
     public:
         EThreadUtilizationResult te_utilize();
         EThreadUtilizationResult te_utilize(const _clock::duration &duration);
-        EThreadUtilizationResult te_utilize(const _clock::time_point &atime);
+        EThreadUtilizationResult te_utilize(const _clock::time_point &time);
         EThreadUtilizationResult te_utilize(const size_t &workPiecesAmount);
 
         EThreadReleaseResult te_release();
@@ -54,7 +53,7 @@ namespace async
         EThreadUtilizationResult te_utilize(const std::chrono::duration<rep, period> &duration);
 
         template<typename clock, typename duration>
-        EThreadUtilizationResult te_utilize(const std::chrono::time_point<clock, duration> &atime);
+        EThreadUtilizationResult te_utilize(const std::chrono::time_point<clock, duration> &time);
 
     private:
         impl::SchedulerPtr _implScheduler;
@@ -69,9 +68,9 @@ namespace async
     }
 
     template<typename clock, typename duration>
-    EThreadUtilizationResult ThreadUtilizer::te_utilize(const std::chrono::time_point<clock, duration> &atime)
+    EThreadUtilizationResult ThreadUtilizer::te_utilize(const std::chrono::time_point<clock, duration> &time)
     {
-        return te_utilize(atime - clock::now());
+        return te_utilize(time - clock::now());
     }
 
 }
