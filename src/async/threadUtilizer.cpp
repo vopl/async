@@ -1,3 +1,4 @@
+#include "async/stable.hpp"
 #include "async/threadUtilizer.hpp"
 #include "async/impl/scheduler.hpp"
 #include "async/impl/threadController.hpp"

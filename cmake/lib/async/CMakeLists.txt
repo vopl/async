@@ -5,11 +5,13 @@ set(PSRC ${SRCDIR}/async)
 project(${PROJECT})
 
 set(INC
-	${PINC}/threadUtilizer.hpp
+    ${PSRC}/stable.hpp
+    ${PINC}/threadUtilizer.hpp
 	${PINC}/threadPool.hpp
     ${PINC}/scheduler.hpp
     ${PSRC}/impl/scheduler.hpp
     ${PSRC}/impl/threadController.hpp
+    ${PSRC}/impl/threadControllerSet.hpp
 )
 source_group(include FILES ${INC})
 
@@ -19,6 +21,7 @@ set(SRC
     ${PSRC}/scheduler.cpp
     ${PSRC}/impl/scheduler.cpp
     ${PSRC}/impl/threadController.cpp
+    ${PSRC}/impl/threadControllerSet.cpp
 )
 source_group(src FILES ${SRC})
 

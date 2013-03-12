@@ -1,3 +1,4 @@
+#include "async/stable.hpp"
 #include "async/impl/threadController.hpp"
 #include "async/impl/scheduler.hpp"
 #include <cassert>
@@ -7,6 +8,7 @@ namespace async { namespace impl
     ThreadController::ThreadController(Scheduler *scheduler)
         : _scheduler(scheduler)
         , _workPiece(NULL)
+        , _releaseRequest(false)
     {
         if(!_scheduler->te_init(this))
         {

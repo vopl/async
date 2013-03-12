@@ -2,8 +2,11 @@
 #define _ASYNC_IMPL_THREADCONTROLLER_HPP_
 
 #include "async/threadUtilizer.hpp"
+
 #include <mutex>
 #include <condition_variable>
+#include <cassert>
+
 
 namespace async { namespace impl
 {
@@ -35,6 +38,7 @@ namespace async { namespace impl
         bool _releaseRequest;
     };
 
+    extern std::atomic<size_t> g_counter;
 
     template <class LimitCounter>
     EThreadUtilizationResult ThreadController::utilize(LimitCounter &limitCounter)
@@ -45,32 +49,48 @@ namespace async { namespace impl
         }
 
         std::unique_lock<std::mutex> lock(_mtx);
+
         for(;;)
         {
+            if(!_workPiece)
+            {
+                requestWorkPiece();
+
+                if(!_workPiece)
+                {
+                    limitCounter.wait(_cv, lock);
+                }
+            }
+
             if(_workPiece)
             {
                 _workPiece = NULL;
                 lock.unlock();
-                //doWork;
+
+                //do work
+                {
+                    volatile size_t c(0);
+                    for(size_t i(0); i<10000; i++)
+                    {
+                        c+=i;
+                    }
+                    g_counter++;
+                }
+
                 lock.lock();
                 limitCounter.incrementWorkAmount();
             }
 
             if(_releaseRequest)
             {
+                assert(!_workPiece);
                 return etur_releaseRequest;
             }
 
             if(limitCounter.completed())
             {
+                assert(!_workPiece);
                 return etur_limitExhausted;
-            }
-
-            requestWorkPiece();
-
-            if(!_workPiece)
-            {
-                limitCounter.wait(_cv, lock);
             }
         }
     }
