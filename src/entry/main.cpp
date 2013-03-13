@@ -1,6 +1,8 @@
 #include "async/threadUtilizer.hpp"
 #include "async/threadPool.hpp"
 #include "async/scheduler.hpp"
+#include "async/impl/context.hpp"
+
 #include <iostream>
 #include <thread>
 #include <cassert>
@@ -50,12 +52,17 @@ int main()
                 {
                     while(!exit)
                     {
-                        volatile size_t c(0);
-                        for(size_t i(0); i<100; i++)
-                        {
-                            c+=i;
-                        }
-                        async::impl::g_counter++;
+                        async::impl::ContextPtr ctx(new async::impl::Context);
+                        ctx->setCode([]{
+                            volatile int c(0);
+                            for(int k(0); k<10; k++)
+                            {
+                                c+=k;
+                            }
+                            async::impl::g_counter++;
+                        });
+
+                        ctx->activate();
                     }
                 });
 

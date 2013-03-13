@@ -111,12 +111,12 @@ namespace async
 
     EThreadReleaseResult ThreadUtilizer::te_release()
     {
-        return _implScheduler->threadRelease(std::this_thread::get_id());
+        return _implScheduler->release(std::this_thread::get_id());
     }
 
     EThreadReleaseResult ThreadUtilizer::release(std::thread::native_handle_type id)
     {
-        return _implScheduler->threadRelease(std::thread::id(id));
+        return _implScheduler->release(std::thread::id(id));
     }
 
 }

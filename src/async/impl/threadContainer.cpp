@@ -1,20 +1,20 @@
 #include "async/stable.hpp"
-#include "async/impl/threadControllerSet.hpp"
+#include "async/impl/threadContainer.hpp"
 
 #include <cassert>
 
 namespace async { namespace impl
 {
-    ThreadControllerSet::ThreadControllerSet()
+    ThreadContainer::ThreadContainer()
     {
     }
 
-    ThreadControllerSet::~ThreadControllerSet()
+    ThreadContainer::~ThreadContainer()
     {
         assert(_threads.empty());
     }
 
-    bool ThreadControllerSet::te_init(ThreadController *controller)
+    bool ThreadContainer::te_init(ThreadController *controller)
     {
         std::unique_lock<std::mutex> l(_mtx);
 
@@ -24,13 +24,23 @@ namespace async { namespace impl
         return insertRes.second;
     }
 
-    void *ThreadControllerSet::te_emitWorkPiece()
+    extern std::atomic<size_t> g_counter;
+
+    ContextPtr ThreadContainer::te_emitWorkPiece()
     {
-        //assert(0);
-        return this;
+        ContextPtr ctx(new Context);
+        ctx->setCode([]{
+            volatile int c(0);
+            for(int k(0); k<10; k++)
+            {
+                c+=k;
+            }
+            async::impl::g_counter++;
+        });
+        return ctx;
     }
 
-    void ThreadControllerSet::te_deinit()
+    void ThreadContainer::te_deinit()
     {
         std::unique_lock<std::mutex> l(_mtx);
 
@@ -44,7 +54,7 @@ namespace async { namespace impl
         _threads.erase(iter);
     }
 
-    EThreadReleaseResult ThreadControllerSet::threadRelease(const std::thread::id &id)
+    EThreadReleaseResult ThreadContainer::release(const std::thread::id &id)
     {
         std::unique_lock<std::mutex> l(_mtx);
         TMThreads::iterator iter = _threads.find(id);

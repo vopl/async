@@ -2,6 +2,7 @@
 #define _ASYNC_IMPL_THREADCONTROLLER_HPP_
 
 #include "async/threadUtilizer.hpp"
+#include "async/impl/context.hpp"
 
 #include <mutex>
 #include <condition_variable>
@@ -22,7 +23,7 @@ namespace async { namespace impl
         EThreadUtilizationResult utilize(LimitCounter &limitCounter);
 
     public:
-        bool pushWorkPiece(void *workPiece);
+        bool pushWorkPiece(const ContextPtr &workPiece);
         void pushReleaseRequest();
 
     private:
@@ -34,11 +35,9 @@ namespace async { namespace impl
         std::mutex _mtx;
         std::condition_variable _cv;
 
-        void *_workPiece;
+        ContextPtr _workPiece;
         bool _releaseRequest;
     };
-
-    extern std::atomic<size_t> g_counter;
 
     template <class LimitCounter>
     EThreadUtilizationResult ThreadController::utilize(LimitCounter &limitCounter)
@@ -64,17 +63,13 @@ namespace async { namespace impl
 
             if(_workPiece)
             {
-                _workPiece = NULL;
+                ContextPtr workPiece;
+                workPiece.swap(_workPiece);
                 lock.unlock();
 
                 //do work
                 {
-                    volatile size_t c(0);
-                    for(size_t i(0); i<100; i++)
-                    {
-                        c+=i;
-                    }
-                    g_counter++;
+                    workPiece->activate();
                 }
 
                 lock.lock();

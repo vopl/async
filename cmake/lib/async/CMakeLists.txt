@@ -11,7 +11,8 @@ set(INC
     ${PINC}/scheduler.hpp
     ${PSRC}/impl/scheduler.hpp
     ${PSRC}/impl/threadController.hpp
-    ${PSRC}/impl/threadControllerSet.hpp
+    ${PSRC}/impl/threadContainer.hpp
+    ${PSRC}/impl/context.hpp
 )
 source_group(include FILES ${INC})
 
@@ -21,7 +22,8 @@ set(SRC
     ${PSRC}/scheduler.cpp
     ${PSRC}/impl/scheduler.cpp
     ${PSRC}/impl/threadController.cpp
-    ${PSRC}/impl/threadControllerSet.cpp
+    ${PSRC}/impl/threadContainer.cpp
+    ${PSRC}/impl/context.cpp
 )
 source_group(src FILES ${SRC})
 
