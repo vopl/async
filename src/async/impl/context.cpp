@@ -31,15 +31,21 @@ namespace async { namespace impl
         return false;
     }
 
-    Context::EActivationResult Context::activate()
+    void Context::activate()
     {
-        if(!_code)
+        assert(_code);
+
+        _scheduler->markContextAsExec(this);
+
+        _scheduler->switchContextTo(this);
+
+        if(_code)
         {
-            return ear_failNoCode;
+        	_scheduler->markContextAsHold(this);
         }
-
-        _scheduler->resume(this);
-
-        return _code?ear_okIncomplete:ear_okComplete;
+        else
+        {
+        	_scheduler->markContextAsEmpty(this);
+        }
     }
 }}

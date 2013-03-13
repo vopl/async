@@ -38,7 +38,7 @@ namespace async { namespace impl
         _threads.erase(iter);
     }
 
-    EThreadReleaseResult ThreadContainer::release(const std::thread::id &id)
+    EThreadReleaseResult ThreadContainer::releaseThread(const std::thread::id &id)
     {
         std::unique_lock<std::mutex> l(_mtx);
         TMThreads::iterator iter = _threads.find(id);
@@ -50,6 +50,14 @@ namespace async { namespace impl
 
         iter->second->pushReleaseRequest();
         return etrr_ok;
+    }
+
+    bool ThreadContainer::pushWorkPiece(Context *workPiece)
+    {
+		//cycled for each threads, if push then return true
+
+    	assert(0);
+    	return false;
     }
 
 }}

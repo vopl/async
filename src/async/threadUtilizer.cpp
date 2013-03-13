@@ -51,10 +51,11 @@ namespace async
         struct LimitCounter
         {
             const _clock::time_point &_time;
-            std::cv_status _lastWaitStatus = std::cv_status::no_timeout;
+            std::cv_status _lastWaitStatus;
 
             LimitCounter(const _clock::time_point &time)
                 : _time(time)
+            	, _lastWaitStatus(std::cv_status::no_timeout)
             {
             }
 
@@ -82,10 +83,11 @@ namespace async
         struct LimitCounter
         {
             const size_t &_limit;
-            size_t _counter=0;
+            size_t _counter;
 
             LimitCounter(const size_t &limit)
                 : _limit(limit)
+            	, _counter(0)
             {
             }
 
@@ -111,12 +113,12 @@ namespace async
 
     EThreadReleaseResult ThreadUtilizer::te_release()
     {
-        return _implScheduler->release(std::this_thread::get_id());
+        return _implScheduler->releaseThread(std::this_thread::get_id());
     }
 
     EThreadReleaseResult ThreadUtilizer::release(std::thread::native_handle_type id)
     {
-        return _implScheduler->release(std::thread::id(id));
+        return _implScheduler->releaseThread(std::thread::id(id));
     }
 
 }

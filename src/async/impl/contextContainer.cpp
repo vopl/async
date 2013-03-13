@@ -12,32 +12,111 @@ namespace async { namespace impl
 
     ContextContainer::~ContextContainer()
     {
+    	std::unique_lock<std::mutex> l(_mtx);
 
+        assert(_ready.empty());
+        //assert(_empty);
+        assert(_hold.empty());
+        assert(_exec.empty());
+        assert(_emitted.empty());
     }
 
-    extern std::atomic<size_t> g_counter;
-    ContextPtr ContextContainer::te_emitWorkPiece()
+    Context *ContextContainer::te_emitWorkPiece()
     {
-        ContextPtr ctx(new Context(static_cast<Scheduler*>(this)));
-        ctx->setCode([]{
-            volatile int c(0);
-            for(int k(0); k<10; k++)
-            {
-                c+=k;
-            }
-            async::impl::g_counter++;
-        });
-        return ctx;
+    	std::unique_lock<std::mutex> l(_mtx);
+
+    	if(_ready.empty())
+    	{
+    		return NULL;
+    	}
+
+    	ContextPtr sp(_ready.front());
+    	_ready.pop();
+
+    	assert(!_exec.count(sp));
+    	assert(!_hold.count(sp));
+    	//assert(!_empty.count(sp));
+    	//assert(!_ready.count(sp));
+    	assert(!_emitted.count(sp));
+
+    	_emitted.insert(sp);
+    	return sp.get();
     }
 
-    void ContextContainer::suspend(Context *ctx)
+    void ContextContainer::pushCodeToRun(const std::function<void()> &code)
     {
-        assert(0);
+    	std::unique_lock<std::mutex> l(_mtx);
+
+    	ContextPtr sp;
+    	if(_empty.empty())
+    	{
+    		sp.reset(new Context(static_cast<Scheduler *>(this)));
+    	}
+    	else
+    	{
+    		sp = _empty.back();
+    		_empty.pop_back();
+    	}
+
+    	sp->setCode(code);
+
+		Scheduler *sched(static_cast<Scheduler*>(this));
+		if(sched->pushWorkPiece(sp.get()))
+		{
+			return;
+		}
+		else
+		{
+	    	_ready.push(sp);
+		}
     }
 
-    void ContextContainer::resume(Context *ctx)
+    void ContextContainer::markContextAsExec(Context *ctx)
     {
-        assert(0);
+    	ContextPtr sp(ctx->shared_from_this());
+
+    	std::unique_lock<std::mutex> l(_mtx);
+
+    	assert(!_exec.count(sp));
+    	assert(!_hold.count(sp));
+    	//assert(!_empty.count(sp));
+    	//assert(!_ready.count(sp));
+    	assert(_emitted.count(sp));
+
+    	_emitted.erase(sp);
+    	_exec.insert(sp);
+    }
+
+    void ContextContainer::markContextAsHold(Context *ctx)
+    {
+    	ContextPtr sp(ctx->shared_from_this());
+
+    	std::unique_lock<std::mutex> l(_mtx);
+
+    	assert(_exec.count(sp));
+    	assert(!_hold.count(sp));
+    	//assert(!_empty.count(sp));
+    	//assert(!_ready.count(sp));
+    	assert(!_emitted.count(sp));
+
+    	_exec.erase(sp);
+    	_hold.insert(sp);
+    }
+
+    void ContextContainer::markContextAsEmpty(Context *ctx)
+    {
+    	ContextPtr sp(ctx->shared_from_this());
+
+    	std::unique_lock<std::mutex> l(_mtx);
+
+    	assert(_exec.count(sp));
+    	assert(!_hold.count(sp));
+    	//assert(!_empty.count(sp));
+    	//assert(!_ready.count(sp));
+    	assert(!_emitted.count(sp));
+
+    	_exec.erase(sp);
+    	_empty.push_back(sp);
     }
 
 

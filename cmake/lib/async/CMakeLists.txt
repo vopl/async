@@ -7,35 +7,38 @@ project(${PROJECT})
 set(INC
     ${PSRC}/stable.hpp
     ${PINC}/threadUtilizer.hpp
-	${PINC}/threadPool.hpp
+    ${PINC}/threadPool.hpp
     ${PINC}/scheduler.hpp
+)
+source_group(include FILES ${INC})
+
+set(INC_IMPL
     ${PSRC}/impl/scheduler.hpp
     ${PSRC}/impl/thread.hpp
     ${PSRC}/impl/threadContainer.hpp
     ${PSRC}/impl/context.hpp
     ${PSRC}/impl/contextContainer.hpp
+    ${PSRC}/impl/contextEngine.hpp
 )
-source_group(include FILES ${INC})
+source_group(include/impl FILES ${INC_IMPL})
 
 set(SRC
 	${PSRC}/threadUtilizer.cpp
 	${PSRC}/threadPool.cpp
     ${PSRC}/scheduler.cpp
+)
+source_group(src FILES ${SRC})
+
+set(SRC_IMPL
     ${PSRC}/impl/scheduler.cpp
     ${PSRC}/impl/thread.cpp
     ${PSRC}/impl/threadContainer.cpp
     ${PSRC}/impl/context.cpp
     ${PSRC}/impl/contextContainer.cpp
-)
-source_group(src FILES ${SRC})
-
-set(SRC_IMPL
+    ${PSRC}/impl/contextEngine.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
 
-set(SRC_IMPL_HDR
-)
-source_group(src/impl FILES ${SRC_IMPL_HDR})
 
 
 
@@ -81,7 +84,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 
 
 
-add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH} ${SRC_IMPL} ${SRC_IMPL_HDR})
+add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH} ${INC_IMPL} ${SRC_IMPL})
 
 
 

@@ -3,6 +3,11 @@
 
 #include "async/impl/context.hpp"
 
+#include <mutex>
+#include <queue>
+#include <vector>
+#include <set>
+
 namespace async { namespace impl
 {
     class ContextContainer
@@ -13,14 +18,24 @@ namespace async { namespace impl
         ~ContextContainer();
 
     public://for thread
-        ContextPtr te_emitWorkPiece();
+        Context* te_emitWorkPiece();
 
     public://for busines
-        void pushCode(const std::function<void()> &code);
+        void pushCodeToRun(const std::function<void()> &code);
 
-    public:
-        void suspend(Context *ctx);
-        void resume(Context *ctx);
+    public://for context
+        void markContextAsExec(Context *ctx);
+        void markContextAsHold(Context *ctx);
+        void markContextAsEmpty(Context *ctx);
+
+    private:
+
+        std::mutex _mtx;
+        std::queue<ContextPtr>	_ready;//fifo
+        std::vector<ContextPtr>	_empty;//push popAny
+        std::set<ContextPtr>	_hold;//insert search-pop
+        std::set<ContextPtr>	_exec;//insert search-pop
+        std::set<ContextPtr>	_emitted;//insert search-pop
     };
 }}
 

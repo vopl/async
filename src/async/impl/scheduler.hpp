@@ -3,6 +3,7 @@
 
 #include "async/impl/threadContainer.hpp"
 #include "async/impl/contextContainer.hpp"
+#include "async/impl/contextEngine.hpp"
 
 #include <memory>
 
@@ -12,10 +13,15 @@ namespace async { namespace impl
         : public std::enable_shared_from_this<Scheduler>
         , public ThreadContainer
         , public ContextContainer
+        , public ContextEngine
     {
     public:
         Scheduler();
         ~Scheduler();
+
+    public://for thread
+        bool te_init(Thread *thread);
+        void te_deinit();
     };
 
     typedef std::shared_ptr<Scheduler> SchedulerPtr;

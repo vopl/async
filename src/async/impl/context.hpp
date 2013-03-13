@@ -8,6 +8,7 @@ namespace async { namespace impl
     class Scheduler;
 
     class Context
+    	: public std::enable_shared_from_this<Context>
     {
 
     public:
@@ -17,14 +18,7 @@ namespace async { namespace impl
         bool hasCode();
         bool setCode(const std::function<void()> &code);
 
-        enum EActivationResult
-        {
-            ear_okIncomplete,
-            ear_okComplete,
-            ear_failNoCode
-        };
-
-        EActivationResult activate();
+        void activate();
 
     private:
         Scheduler *_scheduler;

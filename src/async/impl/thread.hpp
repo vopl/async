@@ -23,7 +23,7 @@ namespace async { namespace impl
         EThreadUtilizationResult utilize(LimitCounter &limitCounter);
 
     public:
-        bool pushWorkPiece(const ContextPtr &workPiece);
+        bool pushWorkPiece(Context *workPiece);
         void pushReleaseRequest();
 
     private:
@@ -35,7 +35,7 @@ namespace async { namespace impl
         std::mutex _mtx;
         std::condition_variable _cv;
 
-        ContextPtr _workPiece;
+        Context* _workPiece;
         bool _releaseRequest;
     };
 
@@ -63,8 +63,8 @@ namespace async { namespace impl
 
             if(_workPiece)
             {
-                ContextPtr workPiece;
-                workPiece.swap(_workPiece);
+                Context* workPiece(NULL);
+                std::swap(workPiece, _workPiece);
                 lock.unlock();
 
                 //do work

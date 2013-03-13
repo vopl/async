@@ -17,7 +17,8 @@ namespace async { namespace impl
     public:
         bool te_init(Thread *thread);
         void te_deinit();
-        EThreadReleaseResult release(const std::thread::id &id);
+        EThreadReleaseResult releaseThread(const std::thread::id &id);
+        bool pushWorkPiece(Context *workPiece);
 
     private:
         std::mutex _mtx;
