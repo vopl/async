@@ -1,5 +1,5 @@
-#ifndef _ASYNC_IMPL_THREADCONTROLLER_HPP_
-#define _ASYNC_IMPL_THREADCONTROLLER_HPP_
+#ifndef _ASYNC_IMPL_THREAD_HPP_
+#define _ASYNC_IMPL_THREAD_HPP_
 
 #include "async/threadUtilizer.hpp"
 #include "async/impl/context.hpp"
@@ -13,11 +13,11 @@ namespace async { namespace impl
 {
     class Scheduler;
 
-    class ThreadController
+    class Thread
     {
     public:
-        ThreadController(Scheduler *scheduler);
-        ~ThreadController();
+        Thread(Scheduler *scheduler);
+        ~Thread();
 
         template <class LimitCounter>
         EThreadUtilizationResult utilize(LimitCounter &limitCounter);
@@ -40,7 +40,7 @@ namespace async { namespace impl
     };
 
     template <class LimitCounter>
-    EThreadUtilizationResult ThreadController::utilize(LimitCounter &limitCounter)
+    EThreadUtilizationResult Thread::utilize(LimitCounter &limitCounter)
     {
         if(!_scheduler)
         {

@@ -10,9 +10,10 @@ set(INC
 	${PINC}/threadPool.hpp
     ${PINC}/scheduler.hpp
     ${PSRC}/impl/scheduler.hpp
-    ${PSRC}/impl/threadController.hpp
+    ${PSRC}/impl/thread.hpp
     ${PSRC}/impl/threadContainer.hpp
     ${PSRC}/impl/context.hpp
+    ${PSRC}/impl/contextContainer.hpp
 )
 source_group(include FILES ${INC})
 
@@ -21,9 +22,10 @@ set(SRC
 	${PSRC}/threadPool.cpp
     ${PSRC}/scheduler.cpp
     ${PSRC}/impl/scheduler.cpp
-    ${PSRC}/impl/threadController.cpp
+    ${PSRC}/impl/thread.cpp
     ${PSRC}/impl/threadContainer.cpp
     ${PSRC}/impl/context.cpp
+    ${PSRC}/impl/contextContainer.cpp
 )
 source_group(src FILES ${SRC})
 

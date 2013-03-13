@@ -14,30 +14,14 @@ namespace async { namespace impl
         assert(_threads.empty());
     }
 
-    bool ThreadContainer::te_init(ThreadController *controller)
+    bool ThreadContainer::te_init(Thread *thread)
     {
         std::unique_lock<std::mutex> l(_mtx);
 
         std::pair<TMThreads::iterator, bool> insertRes =
-                _threads.insert(std::make_pair(std::this_thread::get_id(), controller));
+                _threads.insert(std::make_pair(std::this_thread::get_id(), thread));
 
         return insertRes.second;
-    }
-
-    extern std::atomic<size_t> g_counter;
-
-    ContextPtr ThreadContainer::te_emitWorkPiece()
-    {
-        ContextPtr ctx(new Context);
-        ctx->setCode([]{
-            volatile int c(0);
-            for(int k(0); k<10; k++)
-            {
-                c+=k;
-            }
-            async::impl::g_counter++;
-        });
-        return ctx;
     }
 
     void ThreadContainer::te_deinit()

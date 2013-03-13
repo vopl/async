@@ -1,9 +1,11 @@
 #include "async/impl/context.hpp"
+#include "async/impl/scheduler.hpp"
 
 namespace async { namespace impl
 {
 
-    Context::Context(size_t stackSize)
+    Context::Context(Scheduler *scheduler, size_t stackSize)
+        : _scheduler(scheduler)
     {
 
     }
@@ -35,8 +37,9 @@ namespace async { namespace impl
         {
             return ear_failNoCode;
         }
-        _code();
-        (std::function<void()>()).swap(_code);
-        return ear_okComplete;
+
+        _scheduler->resume(this);
+
+        return _code?ear_okIncomplete:ear_okComplete;
     }
 }}

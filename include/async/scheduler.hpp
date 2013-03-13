@@ -23,6 +23,7 @@ namespace async
         operator ThreadUtilizer();
 
     private:
+    public:
         const impl::SchedulerPtr _implScheduler;
     };
 }

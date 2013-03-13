@@ -48,11 +48,11 @@ int main()
         {
             std::atomic<bool> exit(false);
 
-            std::thread t([&exit]
+            std::thread t([&exit,&sched]
                 {
                     while(!exit)
                     {
-                        async::impl::ContextPtr ctx(new async::impl::Context);
+                        async::impl::ContextPtr ctx(new async::impl::Context(sched._implScheduler.get()));
                         ctx->setCode([]{
                             volatile int c(0);
                             for(int k(0); k<10; k++)

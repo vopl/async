@@ -5,11 +5,13 @@
 
 namespace async { namespace impl
 {
+    class Scheduler;
+
     class Context
     {
 
     public:
-        Context(size_t stackSize=1024*32);
+        Context(Scheduler *scheduler, size_t stackSize=1024*32);
         ~Context();
 
         bool hasCode();
@@ -25,6 +27,7 @@ namespace async { namespace impl
         EActivationResult activate();
 
     private:
+        Scheduler *_scheduler;
         std::function<void()> _code;
     };
 

@@ -1,11 +1,11 @@
 #include "async/stable.hpp"
-#include "async/impl/threadController.hpp"
+#include "async/impl/thread.hpp"
 #include "async/impl/scheduler.hpp"
 #include <cassert>
 
 namespace async { namespace impl
 {
-    ThreadController::ThreadController(Scheduler *scheduler)
+    Thread::Thread(Scheduler *scheduler)
         : _scheduler(scheduler)
         , _workPiece(NULL)
         , _releaseRequest(false)
@@ -16,7 +16,7 @@ namespace async { namespace impl
         }
     }
 
-    ThreadController::~ThreadController()
+    Thread::~Thread()
     {
         if(_scheduler)
         {
@@ -24,7 +24,7 @@ namespace async { namespace impl
         }
     }
 
-    bool ThreadController::pushWorkPiece(const ContextPtr &workPiece)
+    bool Thread::pushWorkPiece(const ContextPtr &workPiece)
     {
         std::unique_lock<std::mutex> l(_mtx, std::defer_lock);
 
@@ -41,14 +41,14 @@ namespace async { namespace impl
         return false;
     }
 
-    void ThreadController::pushReleaseRequest()
+    void Thread::pushReleaseRequest()
     {
         std::unique_lock<std::mutex> l(_mtx);
         _releaseRequest = true;
         _cv.notify_one();
     }
 
-    void ThreadController::requestWorkPiece()
+    void Thread::requestWorkPiece()
     {
         assert(!_workPiece);
         _workPiece = _scheduler->te_emitWorkPiece();

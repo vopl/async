@@ -1,7 +1,7 @@
 #include "async/stable.hpp"
 #include "async/threadUtilizer.hpp"
 #include "async/impl/scheduler.hpp"
-#include "async/impl/threadController.hpp"
+#include "async/impl/thread.hpp"
 #include <cassert>
 
 #include <mutex>
@@ -37,7 +37,7 @@ namespace async
             }
         } limitCounter;
 
-        impl::ThreadController tc(_implScheduler.get());
+        impl::Thread tc(_implScheduler.get());
         return tc.utilize(limitCounter);
     }
 
@@ -73,7 +73,7 @@ namespace async
             }
         } limitCounter(time);
 
-        impl::ThreadController tc(_implScheduler.get());
+        impl::Thread tc(_implScheduler.get());
         return tc.utilize(limitCounter);
     }
 
@@ -105,7 +105,7 @@ namespace async
             }
         } limitCounter(workPiecesAmount);
 
-        impl::ThreadController tc(_implScheduler.get());
+        impl::Thread tc(_implScheduler.get());
         return tc.utilize(limitCounter);
     }
 
