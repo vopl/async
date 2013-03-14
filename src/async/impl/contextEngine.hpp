@@ -16,7 +16,7 @@
 
 namespace async { namespace impl
 {
-    class Task;
+    class Coro;
     class Thread;
 
     class ContextEngine
@@ -40,9 +40,9 @@ namespace async { namespace impl
         };
 
     public://for task
-        void contextCreate(Task *ctx, size_t stackSize);
+        void contextCreate(Coro *coro, size_t stackSize);
         void contextActivate(Context *ctx);
-        void contextDestroy(Task *ctx);
+        void contextDestroy(Coro *coro);
 
     private:
         static __thread Context _threadContext;

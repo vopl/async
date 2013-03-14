@@ -17,8 +17,8 @@ set(INC_IMPL
     ${PSRC}/impl/scheduler.hpp
     ${PSRC}/impl/thread.hpp
     ${PSRC}/impl/threadContainer.hpp
-    ${PSRC}/impl/task.hpp
-    ${PSRC}/impl/taskContainer.hpp
+    ${PSRC}/impl/coro.hpp
+    ${PSRC}/impl/coroContainer.hpp
     ${PSRC}/impl/contextEngine.hpp
 )
 source_group(include/impl FILES ${INC_IMPL})
@@ -35,8 +35,8 @@ set(SRC_IMPL
     ${PSRC}/impl/scheduler.cpp
     ${PSRC}/impl/thread.cpp
     ${PSRC}/impl/threadContainer.cpp
-    ${PSRC}/impl/task.cpp
-    ${PSRC}/impl/taskContainer.cpp
+    ${PSRC}/impl/coro.cpp
+    ${PSRC}/impl/coroContainer.cpp
     ${PSRC}/impl/contextEngine.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})

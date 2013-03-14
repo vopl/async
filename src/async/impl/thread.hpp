@@ -2,7 +2,7 @@
 #define _ASYNC_IMPL_THREAD_HPP_
 
 #include "async/threadUtilizer.hpp"
-#include "async/impl/task.hpp"
+#include "async/impl/coro.hpp"
 
 #include <mutex>
 #include <condition_variable>
@@ -23,7 +23,7 @@ namespace async { namespace impl
         EThreadUtilizationResult utilize(LimitCounter &limitCounter);
 
     public:
-        bool pushWorkPiece(Task *workPiece);
+        bool pushWorkPiece(Coro *workPiece);
         void pushReleaseRequest();
 
     private:
@@ -36,7 +36,7 @@ namespace async { namespace impl
         std::mutex _mtx;
         std::condition_variable _cv;
 
-        Task* _workPiece;
+        Coro* _workPiece;
         bool _releaseRequest;
     };
 
@@ -69,7 +69,7 @@ namespace async { namespace impl
 
             if(_workPiece)
             {
-                Task* workPiece(NULL);
+                Coro* workPiece(NULL);
                 std::swap(workPiece, _workPiece);
                 lock.unlock();
 

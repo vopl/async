@@ -1,16 +1,16 @@
-#include "async/impl/taskContainer.hpp"
+#include "async/impl/coroContainer.hpp"
 #include "async/impl/scheduler.hpp"
 #include <atomic>
 
 namespace async { namespace impl
 {
 
-    TaskContainer::TaskContainer()
+    CoroContainer::CoroContainer()
     {
 
     }
 
-    TaskContainer::~TaskContainer()
+    CoroContainer::~CoroContainer()
     {
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -21,7 +21,7 @@ namespace async { namespace impl
         assert(_emitted.empty());
     }
 
-    Task *TaskContainer::te_emitWorkPiece()
+    Coro *CoroContainer::te_emitWorkPiece()
     {
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -30,7 +30,7 @@ namespace async { namespace impl
     		return NULL;
     	}
 
-        TaskPtr sp(_ready.front());
+        CoroPtr sp(_ready.front());
     	_ready.pop();
 
     	assert(!_exec.count(sp));
@@ -43,14 +43,14 @@ namespace async { namespace impl
     	return sp.get();
     }
 
-    void TaskContainer::pushCodeToRun(const std::function<void()> &code)
+    void CoroContainer::pushCodeToRun(const std::function<void()> &code)
     {
     	std::unique_lock<std::mutex> l(_mtx);
 
-        TaskPtr sp;
+        CoroPtr sp;
     	if(_empty.empty())
     	{
-            sp.reset(new Task(static_cast<Scheduler *>(this)));
+            sp.reset(new Coro(static_cast<Scheduler *>(this)));
     	}
     	else
     	{
@@ -71,9 +71,9 @@ namespace async { namespace impl
 		}
     }
 
-    void TaskContainer::markTaskAsExec(Task *ctx)
+    void CoroContainer::markCoroAsExec(Coro *coro)
     {
-        TaskPtr sp(ctx->shared_from_this());
+        CoroPtr sp(coro->shared_from_this());
 
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -87,9 +87,9 @@ namespace async { namespace impl
     	_exec.insert(sp);
     }
 
-    void TaskContainer::markTaskAsHold(Task *ctx)
+    void CoroContainer::markCoroAsHold(Coro *coro)
     {
-        TaskPtr sp(ctx->shared_from_this());
+        CoroPtr sp(coro->shared_from_this());
 
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -103,9 +103,9 @@ namespace async { namespace impl
     	_hold.insert(sp);
     }
 
-    void TaskContainer::markTaskAsEmpty(Task *ctx)
+    void CoroContainer::markCoroAsEmpty(Coro *coro)
     {
-        TaskPtr sp(ctx->shared_from_this());
+        CoroPtr sp(coro->shared_from_this());
 
     	std::unique_lock<std::mutex> l(_mtx);
 

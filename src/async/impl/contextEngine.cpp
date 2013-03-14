@@ -42,13 +42,13 @@ namespace async { namespace impl
 		//destroy root context
 
         //nothing
-        assert(_currentContext = &_threadContext);
+        assert(_currentContext == &_threadContext);
         _currentContext = nullptr;
     }
 
-    void ContextEngine::contextCreate(Task *task, size_t stackSize)
+    void ContextEngine::contextCreate(Coro *coro, size_t stackSize)
     {
-        Context *ctx = &task->_context;
+        Context *ctx = &coro->_context;
 
         if(getcontext(ctx))
         {
@@ -70,8 +70,8 @@ namespace async { namespace impl
         int iarg = static_cast<int>(task);
         makecontext(ctx, (void (*)(void))&ContextEngine::s_contextProc, 1, iarg);
 #elif PVOID_SIZE == INT_SIZE*2
-        static_assert(sizeof(uint64_t) == sizeof(task), "sizeof(uint64_t) == sizeof(task)");
-        uint64_t iarg = reinterpret_cast<uint64_t>(task);
+        static_assert(sizeof(uint64_t) == sizeof(coro), "sizeof(uint64_t) == sizeof(task)");
+        uint64_t iarg = reinterpret_cast<uint64_t>(coro);
         int iarg1 = (unsigned int)(iarg&0xffffffff);
         int iarg2 = (unsigned int)((iarg>>32)&0xffffffff);
 
@@ -96,9 +96,9 @@ namespace async { namespace impl
         swapcontext(prev, ctx);
 	}
 
-    void ContextEngine::contextDestroy(Task *task)
+    void ContextEngine::contextDestroy(Coro *coro)
     {
-        Context *ctx = &task->_context;
+        Context *ctx = &coro->_context;
         assert(_currentContext != ctx);
 
         if(ctx->uc_stack.ss_sp)
@@ -118,9 +118,9 @@ namespace async { namespace impl
 #elif PVOID_SIZE == INT_SIZE*2
     void ContextEngine::s_contextProc(int param1, int param2)
     {
-        uint64_t itask = ((unsigned int)param1) | (((uint64_t)param2)<<32);
+        uint64_t icoro = ((unsigned int)param1) | (((uint64_t)param2)<<32);
 
-        reinterpret_cast<Task*>(itask)->contextProc();
+        reinterpret_cast<Coro*>(icoro)->contextProc();
     }
 #else
 #   error PVOID_SIZE not equal INT_SIZE or INT_SIZE*2

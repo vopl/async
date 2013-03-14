@@ -1,5 +1,5 @@
-#ifndef _ASYNC_IMPL_TASK_HPP_
-#define _ASYNC_IMPL_TASK_HPP_
+#ifndef _ASYNC_IMPL_CORO_HPP_
+#define _ASYNC_IMPL_CORO_HPP_
 
 #include <memory>
 #include "async/impl/contextEngine.hpp"
@@ -8,16 +8,16 @@ namespace async { namespace impl
 {
     class Scheduler;
 
-    class Task
-        : public std::enable_shared_from_this<Task>
+    class Coro
+        : public std::enable_shared_from_this<Coro>
     {
 
     public:
-        Task(Scheduler *scheduler, size_t stackSize=1024*32);
-        ~Task();
+        Coro(Scheduler *scheduler, size_t stackSize=1024*32);
+        ~Coro();
 
         bool hasCode();
-        bool setCode(const std::function<void()> &code);
+        void setCode(const std::function<void()> &code);
 
         void activate();
 
@@ -32,7 +32,7 @@ namespace async { namespace impl
         void contextProc();
     };
 
-    typedef std::shared_ptr<Task> TaskPtr;
+    typedef std::shared_ptr<Coro> CoroPtr;
 }}
 
 #endif

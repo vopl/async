@@ -52,7 +52,7 @@ namespace async { namespace impl
         return etrr_ok;
     }
 
-    bool ThreadContainer::pushWorkPiece(Task *workPiece)
+    bool ThreadContainer::pushWorkPiece(Coro *workPiece)
     {
 		//cycled for each threads, if push then return true
 
