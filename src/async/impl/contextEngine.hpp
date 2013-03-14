@@ -1,11 +1,24 @@
 #ifndef _ASYNC_IMPL_CONTEXTENGINE_HPP_
 #define _ASYNC_IMPL_CONTEXTENGINE_HPP_
 
-#include "async/impl/thread.hpp"
-#include "async/impl/context.hpp"
+#include "config.h"
+
+#if defined(HAVE_UCONTEXT_H)
+#   include <ucontext.h>
+#else
+#   error not have ucontext.h
+#endif
+
+
+#if defined(HAVE_VALGRIND)
+#   define USE_VALGRIND
+#endif
 
 namespace async { namespace impl
 {
+    class Context;
+    class Thread;
+
     class ContextEngine
     {
 
@@ -18,7 +31,18 @@ namespace async { namespace impl
         void te_deinit();
 
     public://for context
-        void switchContextTo(Context *nextCtx);
+        struct ContextState
+        {
+            ucontext_t _uctx;
+#if defined(USE_VALGRIND)
+            int _valgrindStackId;
+#endif
+        };
+
+    public://for context
+        void contextCreate(ContextState *ctx, size_t stackSize);
+        void contextActivate(ContextState *ctx);
+        void contextDestroy(ContextState *ctx);
     };
 }}
 

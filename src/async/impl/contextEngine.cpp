@@ -1,8 +1,12 @@
 #include "async/impl/contextEngine.hpp"
+#include "async/impl/context.hpp"
+#include "async/impl/thread.hpp"
+
+#include <cassert>
 
 namespace async { namespace impl
 {
-	ContextEngine::ContextEngine()
+    ContextEngine::ContextEngine()
 	{
 	}
 
@@ -23,12 +27,23 @@ namespace async { namespace impl
 		assert(0);
 	}
 
-	void ContextEngine::switchContextTo(Context *nextCtx)
+    void ContextEngine::contextCreate(ContextState *ctx, size_t stackSize)
+    {
+        assert(0);
+    }
+
+    void ContextEngine::contextActivate(ContextState *ctx)
 	{
 		//assert(current exists)
 		//current=ctx
 		//switch to ctx, return to previous current
 		assert(0);
 	}
+
+    void ContextEngine::contextDestroy(ContextState *ctx)
+    {
+        assert(0);
+    }
+
 
 }}

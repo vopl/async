@@ -2,13 +2,14 @@
 #define _ASYNC_IMPL_CONTEXT_HPP_
 
 #include <memory>
+#include "async/impl/contextEngine.hpp"
 
 namespace async { namespace impl
 {
     class Scheduler;
 
     class Context
-    	: public std::enable_shared_from_this<Context>
+        : public std::enable_shared_from_this<Context>
     {
 
     public:
@@ -23,6 +24,9 @@ namespace async { namespace impl
     private:
         Scheduler *_scheduler;
         std::function<void()> _code;
+
+    private:
+        ContextEngine::ContextState _state;
     };
 
     typedef std::shared_ptr<Context> ContextPtr;

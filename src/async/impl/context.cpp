@@ -7,12 +7,12 @@ namespace async { namespace impl
     Context::Context(Scheduler *scheduler, size_t stackSize)
         : _scheduler(scheduler)
     {
-
+        _scheduler->contextCreate(&_state, stackSize);
     }
 
     Context::~Context()
     {
-
+        _scheduler->contextDestroy(&_state);
     }
 
     bool Context::hasCode()
@@ -37,7 +37,7 @@ namespace async { namespace impl
 
         _scheduler->markContextAsExec(this);
 
-        _scheduler->switchContextTo(this);
+        _scheduler->contextActivate(&_state);
 
         if(_code)
         {

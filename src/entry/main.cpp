@@ -1,7 +1,6 @@
 #include "async/threadUtilizer.hpp"
 #include "async/threadPool.hpp"
 #include "async/scheduler.hpp"
-#include "async/impl/context.hpp"
 
 #include <iostream>
 #include <thread>

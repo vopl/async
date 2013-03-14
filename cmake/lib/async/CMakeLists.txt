@@ -41,7 +41,6 @@ source_group(src/impl FILES ${SRC_IMPL})
 
 
 
-
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${PSRC})
 
