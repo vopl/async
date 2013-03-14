@@ -1,5 +1,5 @@
-#ifndef _ASYNC_IMPL_CONTEXT_HPP_
-#define _ASYNC_IMPL_CONTEXT_HPP_
+#ifndef _ASYNC_IMPL_TASK_HPP_
+#define _ASYNC_IMPL_TASK_HPP_
 
 #include <memory>
 #include "async/impl/contextEngine.hpp"
@@ -8,13 +8,13 @@ namespace async { namespace impl
 {
     class Scheduler;
 
-    class Context
-        : public std::enable_shared_from_this<Context>
+    class Task
+        : public std::enable_shared_from_this<Task>
     {
 
     public:
-        Context(Scheduler *scheduler, size_t stackSize=1024*32);
-        ~Context();
+        Task(Scheduler *scheduler, size_t stackSize=1024*32);
+        ~Task();
 
         bool hasCode();
         bool setCode(const std::function<void()> &code);
@@ -26,10 +26,13 @@ namespace async { namespace impl
         std::function<void()> _code;
 
     private:
-        ContextEngine::ContextState _state;
+        friend class ContextEngine;
+        ContextEngine::Context _context;
+
+        void contextProc();
     };
 
-    typedef std::shared_ptr<Context> ContextPtr;
+    typedef std::shared_ptr<Task> TaskPtr;
 }}
 
 #endif

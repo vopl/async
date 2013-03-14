@@ -12,6 +12,7 @@ namespace async
         {
             thread = std::thread([this]{_tu.te_utilize();});
         }
+        //TODO ждать пока все воркеры окончат регистрацию в шедулере
     }
 
     ThreadPool::~ThreadPool()
@@ -19,7 +20,8 @@ namespace async
         for(std::thread &thread: _threads)
         {
             assert(thread.get_id() != std::this_thread::get_id());
-            _tu.release(thread.native_handle());
+            EThreadReleaseResult etrr = _tu.release(thread.native_handle());
+            assert(etrr_ok == etrr);
         }
         for(std::thread &thread: _threads)
         {

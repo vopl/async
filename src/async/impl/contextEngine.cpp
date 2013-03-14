@@ -1,14 +1,20 @@
+#include "stable.hpp"
 #include "async/impl/contextEngine.hpp"
-#include "async/impl/context.hpp"
 #include "async/impl/thread.hpp"
 
 #include <cassert>
+#if defined(USE_VALGRIND)
+#   include <valgrind.h>
+#endif
 
 namespace async { namespace impl
 {
+    __thread ContextEngine::Context ContextEngine::_threadContext = {};
+    __thread ContextEngine::Context *ContextEngine::_currentContext = nullptr;
+
     ContextEngine::ContextEngine()
 	{
-	}
+    }
 
 	ContextEngine::~ContextEngine()
 	{
@@ -16,34 +22,110 @@ namespace async { namespace impl
 
 	bool ContextEngine::te_init(Thread *thread)
 	{
-		//create root context
-		assert(0);
-		return false;
+        (void)thread;
+
+        //create root context
+        Context *ctx = &_threadContext;
+        assert(!ctx->uc_stack.ss_sp);
+
+        if(getcontext(ctx))
+        {
+            return false;
+        }
+        _currentContext = ctx;
+
+        return true;
 	}
 
 	void ContextEngine::te_deinit()
 	{
 		//destroy root context
-		assert(0);
-	}
 
-    void ContextEngine::contextCreate(ContextState *ctx, size_t stackSize)
-    {
-        assert(0);
+        //nothing
+        assert(_currentContext = &_threadContext);
+        _currentContext = nullptr;
     }
 
-    void ContextEngine::contextActivate(ContextState *ctx)
+    void ContextEngine::contextCreate(Task *task, size_t stackSize)
+    {
+        Context *ctx = &task->_context;
+
+        if(getcontext(ctx))
+        {
+            std::cerr<<__FUNCTION__<<", getcontext failed"<<std::endl;
+            std::terminate();
+            return;
+        }
+
+        ctx->uc_link = NULL;
+        ctx->uc_stack.ss_sp = (char *)malloc(stackSize);
+        ctx->uc_stack.ss_size = stackSize;
+
+#if defined(USE_VALGRIND)
+        ctx->_valgrindStackId = VALGRIND_STACK_REGISTER(ctx->uc_stack.ss_sp, (char *)ctx->uc_stack.ss_sp + ctx->uc_stack.ss_size);
+#endif
+
+#if PVOID_SIZE == INT_SIZE
+        static_assert(sizeof(int) == sizeof(task), "sizeof(int) == sizeof(task)");
+        int iarg = static_cast<int>(task);
+        makecontext(ctx, (void (*)(void))&ContextEngine::s_contextProc, 1, iarg);
+#elif PVOID_SIZE == INT_SIZE*2
+        static_assert(sizeof(uint64_t) == sizeof(task), "sizeof(uint64_t) == sizeof(task)");
+        uint64_t iarg = reinterpret_cast<uint64_t>(task);
+        int iarg1 = (unsigned int)(iarg&0xffffffff);
+        int iarg2 = (unsigned int)((iarg>>32)&0xffffffff);
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpmf-conversions"
+        makecontext(ctx, (void (*)(void))&ContextEngine::s_contextProc, 2, iarg1, iarg2);
+#pragma GCC diagnostic pop
+
+#else
+        error PVOID_SIZE not equal INT_SIZE or INT_SIZE*2
+#endif
+
+    }
+
+    void ContextEngine::contextActivate(Context *ctx)
 	{
-		//assert(current exists)
-		//current=ctx
-		//switch to ctx, return to previous current
-		assert(0);
+        assert(_currentContext);
+        assert(_currentContext != ctx);
+
+        Context *prev = _currentContext;
+        _currentContext = ctx;
+        swapcontext(prev, ctx);
 	}
 
-    void ContextEngine::contextDestroy(ContextState *ctx)
+    void ContextEngine::contextDestroy(Task *task)
     {
-        assert(0);
+        Context *ctx = &task->_context;
+        assert(_currentContext != ctx);
+
+        if(ctx->uc_stack.ss_sp)
+        {
+#if defined(USE_VALGRIND)
+            VALGRIND_STACK_DEREGISTER(ctx->_valgrindStackId);
+#endif
+            free(ctx->uc_stack.ss_sp);
+        }
     }
 
+#if PVOID_SIZE == INT_SIZE
+    void ContextEngine::s_contextProc(int param)
+    {
+        reinterpret_cast<Task*>(param)->contextProc();
+    }
+#elif PVOID_SIZE == INT_SIZE*2
+    void ContextEngine::s_contextProc(int param1, int param2)
+    {
+        uint64_t itask = ((unsigned int)param1) | (((uint64_t)param2)<<32);
+
+        reinterpret_cast<Task*>(itask)->contextProc();
+    }
+#else
+#   error PVOID_SIZE not equal INT_SIZE or INT_SIZE*2
+#endif
 
 }}
+
+

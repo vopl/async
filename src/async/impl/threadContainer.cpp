@@ -45,6 +45,7 @@ namespace async { namespace impl
 
         if(_threads.end() == iter)
         {
+            assert(0);
             return etrr_notInWork;
         }
 
@@ -52,7 +53,7 @@ namespace async { namespace impl
         return etrr_ok;
     }
 
-    bool ThreadContainer::pushWorkPiece(Context *workPiece)
+    bool ThreadContainer::pushWorkPiece(Task *workPiece)
     {
 		//cycled for each threads, if push then return true
 

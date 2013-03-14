@@ -16,7 +16,7 @@
 
 namespace async { namespace impl
 {
-    class Context;
+    class Task;
     class Thread;
 
     class ContextEngine
@@ -30,19 +30,33 @@ namespace async { namespace impl
         bool te_init(Thread *thread);
         void te_deinit();
 
-    public://for context
-        struct ContextState
+    public://for task
+        struct Context
+            : ucontext_t
         {
-            ucontext_t _uctx;
 #if defined(USE_VALGRIND)
             int _valgrindStackId;
 #endif
         };
 
-    public://for context
-        void contextCreate(ContextState *ctx, size_t stackSize);
-        void contextActivate(ContextState *ctx);
-        void contextDestroy(ContextState *ctx);
+    public://for task
+        void contextCreate(Task *ctx, size_t stackSize);
+        void contextActivate(Context *ctx);
+        void contextDestroy(Task *ctx);
+
+    private:
+        static __thread Context _threadContext;
+        static __thread Context *_currentContext;
+
+    private:
+#if PVOID_SIZE == INT_SIZE
+        void s_contextProc(int param);
+#elif PVOID_SIZE == INT_SIZE*2
+        void s_contextProc(int param1, int param2);
+#else
+#   error PVOID_SIZE not equal INT_SIZE or INT_SIZE*2
+#endif
+
     };
 }}
 

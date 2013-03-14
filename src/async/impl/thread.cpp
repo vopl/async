@@ -24,7 +24,7 @@ namespace async { namespace impl
         }
     }
 
-    bool Thread::pushWorkPiece(Context *workPiece)
+    bool Thread::pushWorkPiece(Task *workPiece)
     {
         std::unique_lock<std::mutex> l(_mtx, std::defer_lock);
 

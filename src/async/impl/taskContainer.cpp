@@ -1,16 +1,16 @@
-#include "async/impl/contextContainer.hpp"
+#include "async/impl/taskContainer.hpp"
 #include "async/impl/scheduler.hpp"
 #include <atomic>
 
 namespace async { namespace impl
 {
 
-    ContextContainer::ContextContainer()
+    TaskContainer::TaskContainer()
     {
 
     }
 
-    ContextContainer::~ContextContainer()
+    TaskContainer::~TaskContainer()
     {
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -21,7 +21,7 @@ namespace async { namespace impl
         assert(_emitted.empty());
     }
 
-    Context *ContextContainer::te_emitWorkPiece()
+    Task *TaskContainer::te_emitWorkPiece()
     {
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -30,7 +30,7 @@ namespace async { namespace impl
     		return NULL;
     	}
 
-    	ContextPtr sp(_ready.front());
+        TaskPtr sp(_ready.front());
     	_ready.pop();
 
     	assert(!_exec.count(sp));
@@ -43,14 +43,14 @@ namespace async { namespace impl
     	return sp.get();
     }
 
-    void ContextContainer::pushCodeToRun(const std::function<void()> &code)
+    void TaskContainer::pushCodeToRun(const std::function<void()> &code)
     {
     	std::unique_lock<std::mutex> l(_mtx);
 
-    	ContextPtr sp;
+        TaskPtr sp;
     	if(_empty.empty())
     	{
-    		sp.reset(new Context(static_cast<Scheduler *>(this)));
+            sp.reset(new Task(static_cast<Scheduler *>(this)));
     	}
     	else
     	{
@@ -71,9 +71,9 @@ namespace async { namespace impl
 		}
     }
 
-    void ContextContainer::markContextAsExec(Context *ctx)
+    void TaskContainer::markTaskAsExec(Task *ctx)
     {
-    	ContextPtr sp(ctx->shared_from_this());
+        TaskPtr sp(ctx->shared_from_this());
 
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -87,9 +87,9 @@ namespace async { namespace impl
     	_exec.insert(sp);
     }
 
-    void ContextContainer::markContextAsHold(Context *ctx)
+    void TaskContainer::markTaskAsHold(Task *ctx)
     {
-    	ContextPtr sp(ctx->shared_from_this());
+        TaskPtr sp(ctx->shared_from_this());
 
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -103,9 +103,9 @@ namespace async { namespace impl
     	_hold.insert(sp);
     }
 
-    void ContextContainer::markContextAsEmpty(Context *ctx)
+    void TaskContainer::markTaskAsEmpty(Task *ctx)
     {
-    	ContextPtr sp(ctx->shared_from_this());
+        TaskPtr sp(ctx->shared_from_this());
 
     	std::unique_lock<std::mutex> l(_mtx);
 
