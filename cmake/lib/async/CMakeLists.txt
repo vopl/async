@@ -7,6 +7,7 @@ project(${PROJECT})
 set(INC
     ${PSRC}/stable.hpp
     ${PINC}/threadUtilizer.hpp
+    ${PINC}/threadState.hpp
     ${PINC}/threadPool.hpp
     ${PINC}/scheduler.hpp
 )
@@ -25,6 +26,7 @@ source_group(include/impl FILES ${INC_IMPL})
 set(SRC
 	${PSRC}/threadUtilizer.cpp
 	${PSRC}/threadPool.cpp
+    ${PSRC}/threadState.cpp
     ${PSRC}/scheduler.cpp
 )
 source_group(src FILES ${SRC})

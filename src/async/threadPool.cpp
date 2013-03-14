@@ -6,27 +6,39 @@ namespace async
 {
     ThreadPool::ThreadPool(const async::ThreadUtilizer &tu, size_t amount)
         : _tu(tu)
+        , _threads(amount)
+        , _states(amount)
     {
-        _threads.resize(amount);
-        for(std::thread &thread: _threads)
+        for(size_t idx(0); idx<amount; idx++)
         {
-            thread = std::thread([this]{_tu.te_utilize();});
+            std::thread &thread = _threads[idx];
+            ThreadState *stateEvt = &_states[idx];
+            thread = std::thread([this,stateEvt]{
+                EThreadUtilizationResult etur = _tu.te_utilize(stateEvt);
+                assert(etur_releaseRequest == etur);
+            });
         }
-        //TODO ждать пока все воркеры окончат регистрацию в шедулере
     }
 
     ThreadPool::~ThreadPool()
     {
-        for(std::thread &thread: _threads)
+        size_t amount = _states.size();
+        for(size_t idx(0); idx<amount; idx++)
         {
+            std::thread &thread = _threads[idx];
             assert(thread.get_id() != std::this_thread::get_id());
+
+            _states[idx].waitNot(ThreadState::init);
+
             EThreadReleaseResult etrr = _tu.release(thread.native_handle());
             assert(etrr_ok == etrr);
         }
-        for(std::thread &thread: _threads)
+        for(size_t idx(0); idx<amount; idx++)
         {
+            std::thread &thread = _threads[idx];
             thread.join();
         }
         _threads.clear();
+        _states.clear();
     }
 }

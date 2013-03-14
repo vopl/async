@@ -16,7 +16,7 @@ namespace async { namespace impl
     class Thread
     {
     public:
-        Thread(Scheduler *scheduler);
+        Thread(Scheduler *scheduler, ThreadState *stateEvt);
         ~Thread();
 
         template <class LimitCounter>
@@ -31,6 +31,7 @@ namespace async { namespace impl
 
     private:
         Scheduler *_scheduler;
+        ThreadState *_stateEvt;
 
         std::mutex _mtx;
         std::condition_variable _cv;
@@ -42,6 +43,11 @@ namespace async { namespace impl
     template <class LimitCounter>
     EThreadUtilizationResult Thread::utilize(LimitCounter &limitCounter)
     {
+        if(_stateEvt)
+        {
+            _stateEvt->set(ThreadState::inWork);
+        }
+
         if(!_scheduler)
         {
             return etur_notBeenUtilized;
@@ -79,12 +85,24 @@ namespace async { namespace impl
             if(_releaseRequest)
             {
                 assert(!_workPiece);
+
+                if(_stateEvt)
+                {
+                    _stateEvt->set(ThreadState::doneWork);
+                }
+
                 return etur_releaseRequest;
             }
 
             if(limitCounter.completed())
             {
                 assert(!_workPiece);
+
+                if(_stateEvt)
+                {
+                    _stateEvt->set(ThreadState::doneWork);
+                }
+
                 return etur_limitExhausted;
             }
         }

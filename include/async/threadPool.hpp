@@ -17,6 +17,7 @@ namespace async
     private:
         async::ThreadUtilizer _tu;
         std::vector<std::thread> _threads;
+        std::vector<ThreadState> _states;
     };
 }
 

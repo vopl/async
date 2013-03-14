@@ -18,7 +18,7 @@ namespace async
     {
     }
 
-    EThreadUtilizationResult ThreadUtilizer::te_utilize()
+    EThreadUtilizationResult ThreadUtilizer::te_utilize(ThreadState *stateEvt)
     {
         struct LimitCounter
         {
@@ -37,16 +37,16 @@ namespace async
             }
         } limitCounter;
 
-        impl::Thread tc(_implScheduler.get());
+        impl::Thread tc(_implScheduler.get(), stateEvt);
         return tc.utilize(limitCounter);
     }
 
-    EThreadUtilizationResult ThreadUtilizer::te_utilize(const _clock::duration &duration)
+    EThreadUtilizationResult ThreadUtilizer::te_utilize(const _clock::duration &duration, ThreadState *stateEvt)
     {
-        return te_utilize(_clock::now() + duration);
+        return te_utilize(_clock::now() + duration, stateEvt);
     }
 
-    EThreadUtilizationResult ThreadUtilizer::te_utilize(const _clock::time_point &time)
+    EThreadUtilizationResult ThreadUtilizer::te_utilize(const _clock::time_point &time, ThreadState *stateEvt)
     {
         struct LimitCounter
         {
@@ -74,11 +74,11 @@ namespace async
             }
         } limitCounter(time);
 
-        impl::Thread tc(_implScheduler.get());
+        impl::Thread tc(_implScheduler.get(), stateEvt);
         return tc.utilize(limitCounter);
     }
 
-    EThreadUtilizationResult ThreadUtilizer::te_utilize(const size_t &workPiecesAmount)
+    EThreadUtilizationResult ThreadUtilizer::te_utilize(const size_t &workPiecesAmount, ThreadState *stateEvt)
     {
         struct LimitCounter
         {
@@ -107,7 +107,7 @@ namespace async
             }
         } limitCounter(workPiecesAmount);
 
-        impl::Thread tc(_implScheduler.get());
+        impl::Thread tc(_implScheduler.get(), stateEvt);
         return tc.utilize(limitCounter);
     }
 

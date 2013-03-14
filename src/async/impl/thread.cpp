@@ -5,23 +5,44 @@
 
 namespace async { namespace impl
 {
-    Thread::Thread(Scheduler *scheduler)
+    Thread::Thread(Scheduler *scheduler, ThreadState *stateEvt)
         : _scheduler(scheduler)
+        , _stateEvt(stateEvt)
         , _workPiece(NULL)
         , _releaseRequest(false)
     {
+        if(_stateEvt)
+        {
+            _stateEvt->set(ThreadState::init);
+        }
         if(!_scheduler->te_init(this))
         {
             _scheduler = NULL;
+        }
+        else
+        {
+            if(_stateEvt)
+            {
+                _stateEvt->set(ThreadState::inited);
+            }
         }
     }
 
     Thread::~Thread()
     {
+        if(_stateEvt)
+        {
+            _stateEvt->set(ThreadState::deinit);
+        }
         if(_scheduler)
         {
             _scheduler->te_deinit();
         }
+        if(_stateEvt)
+        {
+            _stateEvt->set(ThreadState::deinited);
+        }
+
     }
 
     bool Thread::pushWorkPiece(Task *workPiece)
