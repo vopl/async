@@ -86,15 +86,27 @@ namespace async { namespace impl
 
     }
 
-    void ContextEngine::contextActivate(Context *ctx)
+    void ContextEngine::contextActivate(Coro *coro)
 	{
         assert(_currentContext);
-        assert(_currentContext != ctx);
+        assert(_currentContext == &_threadContext);
+        assert(_currentContext != &coro->_context);
 
         Context *prev = _currentContext;
-        _currentContext = ctx;
-        swapcontext(prev, ctx);
+        _currentContext = &coro->_context;
+        swapcontext(prev, &coro->_context);
 	}
+
+    void ContextEngine::contextDeactivate(Coro *coro)
+    {
+        assert(_currentContext);
+        assert(_currentContext != &_threadContext);
+        assert(_currentContext == &coro->_context);
+
+        Context *prev = _currentContext;
+        _currentContext = &_threadContext;
+        swapcontext(prev, &_threadContext);
+    }
 
     void ContextEngine::contextDestroy(Coro *coro)
     {

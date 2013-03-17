@@ -21,12 +21,11 @@ namespace async { namespace impl
         Coro* te_emitWorkPiece();
 
     public://for busines
-        void pushCodeToRun(const std::function<void()> &code);
+        void spawn(const std::function<void()> &code);
 
     public://for context
-        void markCoroAsExec(Coro *coro);
-        void markCoroAsHold(Coro *coro);
-        void markCoroAsEmpty(Coro *coro);
+        void coroCodeExecute(Coro *coro);
+        void coroCodeExecuted(Coro *coro);
 
     private:
 

@@ -67,7 +67,7 @@ namespace async { namespace impl
                 }
             }
 
-            if(_workPiece)
+            while(_workPiece)
             {
                 Coro* workPiece(NULL);
                 std::swap(workPiece, _workPiece);

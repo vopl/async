@@ -10,6 +10,7 @@ set(INC
     ${PINC}/threadState.hpp
     ${PINC}/threadPool.hpp
     ${PINC}/scheduler.hpp
+    ${PINC}/codeManager.hpp
 )
 source_group(include FILES ${INC})
 
@@ -28,6 +29,7 @@ set(SRC
 	${PSRC}/threadPool.cpp
     ${PSRC}/threadState.cpp
     ${PSRC}/scheduler.cpp
+    ${PSRC}/codeManager.cpp
 )
 source_group(src FILES ${SRC})
 

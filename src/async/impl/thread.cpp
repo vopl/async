@@ -51,8 +51,7 @@ namespace async { namespace impl
 
         if(l.try_lock())
         {
-            assert(!_workPiece);
-            if(!_workPiece)
+            if(!_releaseRequest && !_workPiece)
             {
                 _workPiece = workPiece;
                 _cv.notify_one();

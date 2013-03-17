@@ -6,6 +6,7 @@
 namespace async
 {
     class ThreadUtilizer;
+    class CodeManager;
 
     namespace impl
     {
@@ -21,6 +22,7 @@ namespace async
         ~Scheduler();
 
         operator ThreadUtilizer();
+        operator CodeManager();
 
     private:
     public:

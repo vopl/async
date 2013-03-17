@@ -24,6 +24,7 @@ namespace async { namespace impl
         std::mutex _mtx;
         typedef std::map<std::thread::id, Thread *> TMThreads;
         TMThreads _threads;
+        TMThreads::iterator _nextThreadForPushWork;
 
     };
 }}

@@ -2,6 +2,7 @@
 #include "async/scheduler.hpp"
 #include "async/impl/scheduler.hpp"
 #include "async/threadUtilizer.hpp"
+#include "async/codeManager.hpp"
 
 #include <cassert>
 
@@ -25,6 +26,11 @@ namespace async
     Scheduler::operator ThreadUtilizer()
     {
         return ThreadUtilizer(_implScheduler);
+    }
+
+    Scheduler::operator CodeManager()
+    {
+        return CodeManager(_implScheduler);
     }
 
 }

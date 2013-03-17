@@ -1,3 +1,4 @@
+#include "async/stable.hpp"
 #include "async/impl/coro.hpp"
 #include "async/impl/scheduler.hpp"
 
@@ -29,24 +30,33 @@ namespace async { namespace impl
     void Coro::activate()
     {
         assert(_code);
-
-        _scheduler->markCoroAsExec(this);
-
-        _scheduler->contextActivate(&_context);
-
-        if(_code)
-        {
-            _scheduler->markCoroAsHold(this);
-        }
-        else
-        {
-            _scheduler->markCoroAsEmpty(this);
-        }
+        _scheduler->coroCodeExecute(this);
     }
 
     void Coro::contextProc()
     {
-        assert(0);
+        for(;;)
+        {
+            assert(_code);
+
+            try
+            {
+                _code();
+            }
+            catch(const std::exception &e)
+            {
+                std::cerr<<__FUNCTION__<<", std exception catched: "<<e.what();
+            }
+            catch(...)
+            {
+                std::cerr<<__FUNCTION__<<", unknown exception catched";
+            }
+
+            assert(_code);
+            std::function<void()>().swap(_code);
+
+            _scheduler->coroCodeExecuted(this);
+        }
     }
 
 }}

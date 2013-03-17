@@ -40,9 +40,10 @@ namespace async { namespace impl
         };
 
     public://for task
-        void contextCreate(Coro *coro, size_t stackSize);
-        void contextActivate(Context *ctx);
-        void contextDestroy(Coro *coro);
+        static void contextCreate(Coro *coro, size_t stackSize);
+        static void contextActivate(Coro *coro);
+        static void contextDeactivate(Coro *coro);
+        static void contextDestroy(Coro *coro);
 
     private:
         static __thread Context _threadContext;
@@ -50,9 +51,9 @@ namespace async { namespace impl
 
     private:
 #if PVOID_SIZE == INT_SIZE
-        void s_contextProc(int param);
+        static void s_contextProc(int param);
 #elif PVOID_SIZE == INT_SIZE*2
-        void s_contextProc(int param1, int param2);
+        static void s_contextProc(int param1, int param2);
 #else
 #   error PVOID_SIZE not equal INT_SIZE or INT_SIZE*2
 #endif

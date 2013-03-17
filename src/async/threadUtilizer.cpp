@@ -65,7 +65,7 @@ namespace async
 
             bool completed()
             {
-                return std::cv_status::timeout == _lastWaitStatus;
+                return std::cv_status::timeout == _lastWaitStatus || _clock::now() >= _time;
             }
 
             void wait(std::condition_variable &cv, std::unique_lock<std::mutex> &lock)

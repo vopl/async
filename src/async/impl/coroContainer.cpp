@@ -43,7 +43,7 @@ namespace async { namespace impl
     	return sp.get();
     }
 
-    void CoroContainer::pushCodeToRun(const std::function<void()> &code)
+    void CoroContainer::spawn(const std::function<void()> &code)
     {
     	std::unique_lock<std::mutex> l(_mtx);
 
@@ -63,7 +63,8 @@ namespace async { namespace impl
 		Scheduler *sched(static_cast<Scheduler*>(this));
 		if(sched->pushWorkPiece(sp.get()))
 		{
-			return;
+            _emitted.insert(sp);
+            return;
 		}
 		else
 		{
@@ -71,53 +72,55 @@ namespace async { namespace impl
 		}
     }
 
-    void CoroContainer::markCoroAsExec(Coro *coro)
+    void CoroContainer::coroCodeExecute(Coro *coro)
     {
         CoroPtr sp(coro->shared_from_this());
+        Scheduler *scheduler = static_cast<Scheduler *>(this);
+        ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
-    	std::unique_lock<std::mutex> l(_mtx);
+        {
+            std::unique_lock<std::mutex> l(_mtx);
 
-    	assert(!_exec.count(sp));
-    	assert(!_hold.count(sp));
-    	//assert(!_empty.count(sp));
-    	//assert(!_ready.count(sp));
-    	assert(_emitted.count(sp));
+            assert(!_exec.count(sp));
+            assert(!_hold.count(sp));
+            //assert(!_empty.count(sp));
+            //assert(!_ready.count(sp));
+            assert(_emitted.count(sp));
 
-    	_emitted.erase(sp);
-    	_exec.insert(sp);
+            _emitted.erase(sp);
+            _exec.insert(sp);
+        }
+
+        contextEngine->contextActivate(coro);
+
+        {
+            std::unique_lock<std::mutex> l(_mtx);
+
+            assert(_exec.count(sp));
+            assert(!_hold.count(sp));
+            //assert(!_empty.count(sp));
+            //assert(!_ready.count(sp));
+            assert(!_emitted.count(sp));
+
+            _exec.erase(sp);
+
+            if(coro->hasCode())
+            {
+                _hold.insert(sp);
+            }
+            else
+            {
+                _empty.push_back(sp);
+            }
+        }
     }
 
-    void CoroContainer::markCoroAsHold(Coro *coro)
+    void CoroContainer::coroCodeExecuted(Coro *coro)
     {
-        CoroPtr sp(coro->shared_from_this());
+        Scheduler *scheduler = static_cast<Scheduler *>(this);
+        ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
-    	std::unique_lock<std::mutex> l(_mtx);
-
-    	assert(_exec.count(sp));
-    	assert(!_hold.count(sp));
-    	//assert(!_empty.count(sp));
-    	//assert(!_ready.count(sp));
-    	assert(!_emitted.count(sp));
-
-    	_exec.erase(sp);
-    	_hold.insert(sp);
+        contextEngine->contextDeactivate(coro);
     }
-
-    void CoroContainer::markCoroAsEmpty(Coro *coro)
-    {
-        CoroPtr sp(coro->shared_from_this());
-
-    	std::unique_lock<std::mutex> l(_mtx);
-
-    	assert(_exec.count(sp));
-    	assert(!_hold.count(sp));
-    	//assert(!_empty.count(sp));
-    	//assert(!_ready.count(sp));
-    	assert(!_emitted.count(sp));
-
-    	_exec.erase(sp);
-    	_empty.push_back(sp);
-    }
-
 
 }}

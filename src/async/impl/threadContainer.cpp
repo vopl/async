@@ -6,6 +6,7 @@
 namespace async { namespace impl
 {
     ThreadContainer::ThreadContainer()
+        : _nextThreadForPushWork(_threads.end())
     {
     }
 
@@ -21,6 +22,7 @@ namespace async { namespace impl
         std::pair<TMThreads::iterator, bool> insertRes =
                 _threads.insert(std::make_pair(std::this_thread::get_id(), thread));
 
+        _nextThreadForPushWork = insertRes.first;
         return insertRes.second;
     }
 
@@ -35,7 +37,7 @@ namespace async { namespace impl
             return;
         }
 
-        _threads.erase(iter);
+        _nextThreadForPushWork = _threads.erase(iter);
     }
 
     EThreadReleaseResult ThreadContainer::releaseThread(const std::thread::id &id)
@@ -54,10 +56,27 @@ namespace async { namespace impl
 
     bool ThreadContainer::pushWorkPiece(Coro *workPiece)
     {
-		//cycled for each threads, if push then return true
+        std::unique_lock<std::mutex> l(_mtx);
 
-    	assert(0);
-    	return false;
+        size_t threadsAmount = _threads.size();
+        for(size_t i(0); i<threadsAmount; i++)
+        {
+            if(_threads.end() == _nextThreadForPushWork)
+            {
+                _nextThreadForPushWork = _threads.begin();
+            }
+
+            Thread *thread = _nextThreadForPushWork->second;
+
+            ++_nextThreadForPushWork;
+
+            if(thread->pushWorkPiece(workPiece))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }}
