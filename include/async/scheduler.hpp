@@ -25,7 +25,6 @@ namespace async
         operator CodeManager();
 
     private:
-    public:
         const impl::SchedulerPtr _implScheduler;
     };
 }

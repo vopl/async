@@ -20,6 +20,12 @@ namespace async { namespace impl
         void setCode(const std::function<void()> &code);
 
         void activate();
+        void hold();
+
+        void readyIfHolded();
+
+    public:
+        static Coro *current();
 
     private:
         Scheduler *_scheduler;

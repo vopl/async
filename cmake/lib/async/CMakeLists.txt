@@ -11,6 +11,7 @@ set(INC
     ${PINC}/threadPool.hpp
     ${PINC}/scheduler.hpp
     ${PINC}/codeManager.hpp
+    ${PINC}/event.hpp
 )
 source_group(include FILES ${INC})
 
@@ -21,6 +22,7 @@ set(INC_IMPL
     ${PSRC}/impl/coro.hpp
     ${PSRC}/impl/coroContainer.hpp
     ${PSRC}/impl/contextEngine.hpp
+    ${PSRC}/impl/event.hpp
 )
 source_group(include/impl FILES ${INC_IMPL})
 
@@ -30,6 +32,7 @@ set(SRC
     ${PSRC}/threadState.cpp
     ${PSRC}/scheduler.cpp
     ${PSRC}/codeManager.cpp
+    ${PSRC}/event.cpp
 )
 source_group(src FILES ${SRC})
 
@@ -40,6 +43,7 @@ set(SRC_IMPL
     ${PSRC}/impl/coro.cpp
     ${PSRC}/impl/coroContainer.cpp
     ${PSRC}/impl/contextEngine.cpp
+    ${PSRC}/impl/event.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
 

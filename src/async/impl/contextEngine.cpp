@@ -9,7 +9,7 @@
 
 namespace async { namespace impl
 {
-    __thread ContextEngine::Context ContextEngine::_threadContext = {};
+    __thread ContextEngine::Context ContextEngine::_rootContext = {};
     __thread ContextEngine::Context *ContextEngine::_currentContext = nullptr;
 
     ContextEngine::ContextEngine()
@@ -25,7 +25,7 @@ namespace async { namespace impl
         (void)thread;
 
         //create root context
-        Context *ctx = &_threadContext;
+        Context *ctx = &_rootContext;
         assert(!ctx->uc_stack.ss_sp);
 
         if(getcontext(ctx))
@@ -42,7 +42,7 @@ namespace async { namespace impl
 		//destroy root context
 
         //nothing
-        assert(_currentContext == &_threadContext);
+        assert(_currentContext == &_rootContext);
         _currentContext = nullptr;
     }
 
@@ -89,23 +89,33 @@ namespace async { namespace impl
     void ContextEngine::contextActivate(Coro *coro)
 	{
         assert(_currentContext);
-        assert(_currentContext == &_threadContext);
+        assert(_currentContext == &_rootContext);
         assert(_currentContext != &coro->_context);
 
         Context *prev = _currentContext;
         _currentContext = &coro->_context;
+
+        char tmp[32];
+        sprintf(tmp, "contextActivate       %p\n", coro);
+        std::cout<<tmp; std::cout.flush();
+
         swapcontext(prev, &coro->_context);
 	}
 
     void ContextEngine::contextDeactivate(Coro *coro)
     {
         assert(_currentContext);
-        assert(_currentContext != &_threadContext);
+        assert(_currentContext != &_rootContext);
         assert(_currentContext == &coro->_context);
 
         Context *prev = _currentContext;
-        _currentContext = &_threadContext;
-        swapcontext(prev, &_threadContext);
+        _currentContext = &_rootContext;
+
+        char tmp[32];
+        sprintf(tmp, "contextDeactivate       %p\n", coro);
+        std::cout<<tmp; std::cout.flush();
+
+        swapcontext(prev, &_rootContext);
     }
 
     void ContextEngine::contextDestroy(Coro *coro)

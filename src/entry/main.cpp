@@ -2,6 +2,8 @@
 #include "async/threadUtilizer.hpp"
 #include "async/codeManager.hpp"
 #include "async/threadPool.hpp"
+#include "async/event.hpp"
+#include "async/impl/coro.hpp"
 
 #include <iostream>
 #include <thread>
@@ -37,27 +39,49 @@ int main()
 
 
     {
-        //async::ThreadPool tp(tu, 2);
+        async::ThreadPool tp(tu, 2);
 
+        async::Event event;
 
-        for(size_t k(0); k<1000; k++)
+        for(size_t k(0); k<30; k++)
         {
-            cm.spawn([k]{
+            cm.spawn([k, &event]{
                 //std::cout<<"start test "<<k<<std::endl;
                 //std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
                 char tmp[32];
-                sprintf(tmp, "%d\n", (int)k);
-                std::cout<<tmp; std::cout.flush();
+//                if(!(k&1))
+                if((k&1))
+                {
+                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
+                    event.set(async::Event::erm_afterNotifyAll);
+                    sprintf(tmp, "after set  %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
+                }
+                else
+                {
+                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
+                    event.wait();//TODO need full transaction here
+                    sprintf(tmp, "after wait %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
+                }
+
             });
         }
 
-        for(size_t k(0); k<1000; k++)
+        for(size_t k(0); k<30; k++)
         {
-            tu.te_utilize(std::chrono::nanoseconds(0));
-            //tu.te_utilize(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            event.set(async::Event::erm_afterNotifyAll);
         }
-        //std::this_thread::sleep_for(std::chrono::seconds(1));
+
+//        for(size_t k(0); k<1000; k++)
+//        {
+//            tu.te_utilize(std::chrono::nanoseconds(0));
+//        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     return 0;

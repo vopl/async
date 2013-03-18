@@ -46,7 +46,7 @@ namespace async { namespace impl
         static void contextDestroy(Coro *coro);
 
     private:
-        static __thread Context _threadContext;
+        static __thread Context _rootContext;
         static __thread Context *_currentContext;
 
     private:

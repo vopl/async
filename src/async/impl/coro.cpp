@@ -30,7 +30,24 @@ namespace async { namespace impl
     void Coro::activate()
     {
         assert(_code);
-        _scheduler->coroCodeExecute(this);
+        _scheduler->coroActivate(this);
+    }
+
+    void Coro::hold()
+    {
+        assert(_code);
+        _scheduler->coroHold(this);
+    }
+
+    void Coro::readyIfHolded()
+    {
+        assert(_code);
+        _scheduler->coroReadyIfHolded(this);
+    }
+
+    Coro *Coro::current()
+    {
+        return Scheduler::coroCurrent();
     }
 
     void Coro::contextProc()
@@ -55,7 +72,7 @@ namespace async { namespace impl
             assert(_code);
             std::function<void()>().swap(_code);
 
-            _scheduler->coroCodeExecuted(this);
+            _scheduler->coroHold(this);
         }
     }
 

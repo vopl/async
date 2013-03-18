@@ -24,10 +24,17 @@ namespace async { namespace impl
         void spawn(const std::function<void()> &code);
 
     public://for context
-        void coroCodeExecute(Coro *coro);
-        void coroCodeExecuted(Coro *coro);
+        void coroActivate(Coro *coro);
+        void coroHold(Coro *coro);
+        void coroReadyIfHolded(Coro *coro);
+
+        static Coro *coroCurrent();
+
 
     private:
+
+        static __thread Coro *_current;
+
 
         std::mutex _mtx;
 
