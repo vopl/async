@@ -2,6 +2,8 @@
 #include "async/impl/coro.hpp"
 #include "async/impl/scheduler.hpp"
 
+#include <cassert>
+
 namespace async { namespace impl
 {
 
@@ -27,22 +29,9 @@ namespace async { namespace impl
 		_code = code;
     }
 
-    void Coro::activate()
+    Scheduler *Coro::scheduler()
     {
-        assert(_code);
-        _scheduler->coroActivate(this);
-    }
-
-    void Coro::hold()
-    {
-        assert(_code);
-        _scheduler->coroHold(this);
-    }
-
-    void Coro::readyIfHolded()
-    {
-        assert(_code);
-        _scheduler->coroReadyIfHolded(this);
+        return _scheduler;
     }
 
     Coro *Coro::current()
@@ -72,7 +61,7 @@ namespace async { namespace impl
             assert(_code);
             std::function<void()>().swap(_code);
 
-            _scheduler->coroHold(this);
+            _scheduler->coroComplete(this);
         }
     }
 

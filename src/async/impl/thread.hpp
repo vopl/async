@@ -2,7 +2,7 @@
 #define _ASYNC_IMPL_THREAD_HPP_
 
 #include "async/threadUtilizer.hpp"
-#include "async/impl/coro.hpp"
+#include "async/impl/scheduler.hpp"
 
 #include <mutex>
 #include <condition_variable>
@@ -12,6 +12,7 @@
 namespace async { namespace impl
 {
     class Scheduler;
+    class Coro;
 
     class Thread
     {
@@ -75,7 +76,7 @@ namespace async { namespace impl
 
                 //do work
                 {
-                    workPiece->activate();
+                    _scheduler->coroActivate(workPiece);
                 }
 
                 lock.lock();

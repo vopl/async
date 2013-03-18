@@ -2,7 +2,6 @@
 #define _ASYNC_IMPL_EVENT_HPP_
 
 #include "async/event.hpp"
-#include "async/impl/coro.hpp"
 
 #include <memory>
 #include <mutex>
@@ -10,6 +9,9 @@
 
 namespace async { namespace impl
 {
+    class Coro;
+    typedef std::shared_ptr<Coro> CoroPtr;
+
     class Event
     {
     private:

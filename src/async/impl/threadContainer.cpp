@@ -1,5 +1,6 @@
 #include "async/stable.hpp"
 #include "async/impl/threadContainer.hpp"
+#include "async/impl/thread.hpp"
 
 #include <cassert>
 

@@ -1,8 +1,7 @@
 #ifndef _ASYNC_IMPL_COROCONTAINER_HPP_
 #define _ASYNC_IMPL_COROCONTAINER_HPP_
 
-#include "async/impl/coro.hpp"
-
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <vector>
@@ -10,6 +9,9 @@
 
 namespace async { namespace impl
 {
+    class Coro;
+    typedef std::shared_ptr<Coro> CoroPtr;
+
     class CoroContainer
     {
 
@@ -25,10 +27,13 @@ namespace async { namespace impl
 
     public://for context
         void coroActivate(Coro *coro);
-        void coroHold(Coro *coro);
+        void coroHold(Coro *coro, std::mutex &alienLockedForUnlock);
         void coroReadyIfHolded(Coro *coro);
+        void coroComplete(Coro *coro);
 
         static Coro *coroCurrent();
+
+        std::mutex &mtxForCoroHold();
 
 
     private:

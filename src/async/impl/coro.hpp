@@ -19,12 +19,8 @@ namespace async { namespace impl
         bool hasCode();
         void setCode(const std::function<void()> &code);
 
-        void activate();
-        void hold();
-
-        void readyIfHolded();
-
     public:
+        Scheduler *scheduler();
         static Coro *current();
 
     private:

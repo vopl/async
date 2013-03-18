@@ -1,6 +1,7 @@
 #include "stable.hpp"
 #include "async/impl/contextEngine.hpp"
 #include "async/impl/thread.hpp"
+#include "async/impl/coro.hpp"
 
 #include <cassert>
 #if defined(USE_VALGRIND)
