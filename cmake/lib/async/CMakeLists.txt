@@ -12,6 +12,7 @@ set(INC
     ${PINC}/scheduler.hpp
     ${PINC}/codeManager.hpp
     ${PINC}/event.hpp
+    ${PINC}/wait.hpp
 )
 source_group(include FILES ${INC})
 
@@ -23,6 +24,7 @@ set(INC_IMPL
     ${PSRC}/impl/coroContainer.hpp
     ${PSRC}/impl/contextEngine.hpp
     ${PSRC}/impl/event.hpp
+    ${PSRC}/impl/waiter.hpp
 )
 source_group(include/impl FILES ${INC_IMPL})
 
@@ -44,6 +46,7 @@ set(SRC_IMPL
     ${PSRC}/impl/coroContainer.cpp
     ${PSRC}/impl/contextEngine.cpp
     ${PSRC}/impl/event.cpp
+    ${PSRC}/impl/waiter.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
 

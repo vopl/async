@@ -1,8 +1,11 @@
+#include <iostream>
+
 #include "async/scheduler.hpp"
 #include "async/threadUtilizer.hpp"
 #include "async/codeManager.hpp"
 #include "async/threadPool.hpp"
 #include "async/event.hpp"
+#include "async/wait.hpp"
 #include "async/impl/coro.hpp"
 
 #include <iostream>
@@ -39,15 +42,16 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 40);
+        async::ThreadPool tp(tu, 1);
 
         std::atomic<size_t> cnt(0);
         size_t amount = 300;
         async::Event event;
+        async::Event event2;
 
         for(size_t k(0); k<amount; k++)
         {
-            cm.spawn([k, &event, &cnt]{
+            cm.spawn([k, &event, &event2, &cnt]{
                 char tmp[32];
                 (void)tmp;
 //                if(!(k&1))
@@ -63,7 +67,15 @@ int main()
                 {
 //                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
-                    event.wait();
+                    //event.wait();
+
+                    std::vector<async::Event> container;
+                    container.push_back(event);
+                    container.push_back(event2);
+
+
+                    async::wait(event, event2, container);
+
 //                    sprintf(tmp, "after wait %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
                 }
