@@ -39,23 +39,23 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 4);
+        async::ThreadPool tp(tu, 40);
 
+        std::atomic<size_t> cnt(0);
+        size_t amount = 300;
         async::Event event;
 
-        for(size_t k(0); k<30000; k++)
+        for(size_t k(0); k<amount; k++)
         {
-            cm.spawn([k, &event]{
-                //std::cout<<"start test "<<k<<std::endl;
-                //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
+            cm.spawn([k, &event, &cnt]{
                 char tmp[32];
+                (void)tmp;
 //                if(!(k&1))
                 if((k&1))
                 {
 //                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
-                    event.set(async::Event::erm_afterNotifyAll);
+                    event.set(async::Event::erm_afterNotifyOne);
 //                    sprintf(tmp, "after set  %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
                 }
@@ -68,20 +68,17 @@ int main()
 //                    std::cout<<tmp; std::cout.flush();
                 }
 
+                cnt++;
             });
         }
 
-        for(size_t k(0); k<10; k++)
+        while(cnt < amount)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            event.set(async::Event::erm_afterNotifyAll);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            event.set(async::Event::erm_afterNotifyOne);
         }
 
-//        for(size_t k(0); k<1000; k++)
-//        {
-//            tu.te_utilize(std::chrono::nanoseconds(0));
-//        }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     return 0;

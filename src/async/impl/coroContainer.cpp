@@ -17,7 +17,7 @@ namespace async { namespace impl
 
     CoroContainer::~CoroContainer()
     {
-    	std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
 
     	if(!_hold.empty())
     	{
@@ -32,7 +32,7 @@ namespace async { namespace impl
 
     Coro *CoroContainer::te_emitWorkPiece()
     {
-    	std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
 
     	if(_ready.empty())
     	{
@@ -54,7 +54,7 @@ namespace async { namespace impl
 
     void CoroContainer::spawn(const std::function<void()> &code)
     {
-    	std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
 
         CoroPtr sp;
     	if(_empty.empty())
@@ -90,7 +90,7 @@ namespace async { namespace impl
         ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
         {
-            std::unique_lock<std::mutex> l(_mtx);
+            std::lock_guard<std::mutex> l(_mtx);
 
             assert(!_exec.count(sp));
             assert(!_hold.count(sp));
@@ -136,7 +136,7 @@ namespace async { namespace impl
         ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
         {
-            std::unique_lock<std::mutex> l(_mtx);
+            std::lock_guard<std::mutex> l(_mtx);
 
             assert(_exec.count(sp));
             assert(!_hold.count(sp));
@@ -167,7 +167,7 @@ namespace async { namespace impl
         ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
         {
-            std::unique_lock<std::mutex> l(_mtx);
+            std::lock_guard<std::mutex> l(_mtx);
 
             std::set<CoroPtr>::iterator holdIter = _hold.find(sp);
             if(_hold.end() == holdIter)

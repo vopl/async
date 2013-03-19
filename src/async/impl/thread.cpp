@@ -63,7 +63,7 @@ namespace async { namespace impl
 
     void Thread::pushReleaseRequest()
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
         _releaseRequest = true;
         _cv.notify_one();
     }

@@ -23,7 +23,7 @@ namespace async { namespace impl
 
     void Event::set(::async::Event::EResetMode erm)
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
 
         if(::async::Event::erm_default == erm)
         {
@@ -104,13 +104,13 @@ namespace async { namespace impl
 
     bool Event::isSet()
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
         return _state;
     }
 
     void Event::reset()
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
         assert(_waiters.empty());
         _state = false;
     }

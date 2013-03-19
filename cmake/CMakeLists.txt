@@ -8,7 +8,7 @@ endif()
 set(CMAKE_VERBOSE_MAKEFILE On)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE Debug)
 #    set(CMAKE_BUILD_TYPE Debug CACHE STRING "build type")
 endif()
 
@@ -47,16 +47,16 @@ ENDIF(MSVC)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 #    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
+#    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
-    add_definitions(-D__GXX_EXPERIMENTAL_CXX0X__)
+#    add_definitions(-D__GXX_EXPERIMENTAL_CXX0X__)
 
 endif()
 
-add_definitions(-D_REENTRANT)
-add_definitions(-D_THREAD_SAFE)
+#add_definitions(-D_REENTRANT)
+#add_definitions(-D_THREAD_SAFE)
 
 include(pch.cmake)
 if(MSVC)

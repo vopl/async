@@ -13,7 +13,7 @@ namespace async
 
     ThreadState::EValue ThreadState::get()
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
         return _value;
     }
 
@@ -37,7 +37,7 @@ namespace async
 
     void ThreadState::set(EValue v)
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
         if(_value != v)
         {
             _value = v;

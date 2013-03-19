@@ -18,7 +18,7 @@ namespace async { namespace impl
 
     bool ThreadContainer::te_init(Thread *thread)
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
 
         std::pair<TMThreads::iterator, bool> insertRes =
                 _threads.insert(std::make_pair(std::this_thread::get_id(), thread));
@@ -29,7 +29,7 @@ namespace async { namespace impl
 
     void ThreadContainer::te_deinit()
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
 
         TMThreads::iterator iter = _threads.find(std::this_thread::get_id());
 
@@ -43,7 +43,7 @@ namespace async { namespace impl
 
     EThreadReleaseResult ThreadContainer::releaseThread(const std::thread::id &id)
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
         TMThreads::iterator iter = _threads.find(id);
 
         if(_threads.end() == iter)
@@ -57,7 +57,7 @@ namespace async { namespace impl
 
     bool ThreadContainer::pushWorkPiece(Coro *workPiece)
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        std::lock_guard<std::mutex> l(_mtx);
 
         size_t threadsAmount = _threads.size();
         for(size_t i(0); i<threadsAmount; i++)
