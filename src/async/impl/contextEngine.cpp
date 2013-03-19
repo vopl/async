@@ -12,6 +12,7 @@ namespace async { namespace impl
 {
     __thread ContextEngine::Context ContextEngine::_rootContext = {};
     __thread ContextEngine::Context *ContextEngine::_currentContext = nullptr;
+    __thread std::mutex *ContextEngine::_mtxForUnlockAfterDeactivate = nullptr;
 
     ContextEngine::ContextEngine()
 	{
@@ -93,30 +94,40 @@ namespace async { namespace impl
         assert(_currentContext == &_rootContext);
         assert(_currentContext != &coro->_context);
 
-        Context *prev = _currentContext;
+        coro->scheduler()->markCoroExec(coro);
+
         _currentContext = &coro->_context;
+        swapcontext(&_rootContext, &coro->_context);
 
-        char tmp[32];
-        sprintf(tmp, "contextActivate       %p\n", coro);
-        std::cout<<tmp; std::cout.flush();
+        if(coro->hasCode())
+        {
+        	coro->scheduler()->markCoroHold(coro);
+        }
+        else
+        {
+        	coro->scheduler()->markCoroComplete(coro);
+        }
 
-        swapcontext(prev, &coro->_context);
+        if(_mtxForUnlockAfterDeactivate)
+        {
+        	_mtxForUnlockAfterDeactivate->unlock();
+        	_mtxForUnlockAfterDeactivate = nullptr;
+        }
 	}
 
-    void ContextEngine::contextDeactivate(Coro *coro)
+    void ContextEngine::contextDeactivate(Coro *coro, std::mutex *mtxForUnlockAfterDeactivate)
     {
         assert(_currentContext);
         assert(_currentContext != &_rootContext);
         assert(_currentContext == &coro->_context);
 
-        Context *prev = _currentContext;
+        assert(!_mtxForUnlockAfterDeactivate);
+
+        _mtxForUnlockAfterDeactivate = mtxForUnlockAfterDeactivate;
         _currentContext = &_rootContext;
+        swapcontext(&coro->_context, &_rootContext);
 
-        char tmp[32];
-        sprintf(tmp, "contextDeactivate       %p\n", coro);
-        std::cout<<tmp; std::cout.flush();
-
-        swapcontext(prev, &_rootContext);
+        assert(!_mtxForUnlockAfterDeactivate);
     }
 
     void ContextEngine::contextDestroy(Coro *coro)

@@ -127,7 +127,7 @@ namespace async { namespace impl
         Scheduler *scheduler = coro->scheduler();
 
         {
-            std::lock(_mtx, scheduler->mtxForCoroHold());
+            std::unique_lock<std::mutex> l(_mtx);
 
             assert(_waiters.size() < 200);
             if(_state)
@@ -145,14 +145,13 @@ namespace async { namespace impl
                 case ::async::Event::erm_manual:
                     break;
                 }
-                _mtx.unlock();
-                scheduler->mtxForCoroHold().unlock();
                 return;
             }
 
             _waiters.push_back(coro->shared_from_this());
 
-            scheduler->coroHold(coro, _mtx);
+            l.release();
+            scheduler->contextDeactivate(coro, &_mtx);
         }
     }
 }}

@@ -39,11 +39,11 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 20);
+        async::ThreadPool tp(tu, 4);
 
         async::Event event;
 
-        for(size_t k(0); k<30; k++)
+        for(size_t k(0); k<30000; k++)
         {
             cm.spawn([k, &event]{
                 //std::cout<<"start test "<<k<<std::endl;
@@ -53,27 +53,27 @@ int main()
 //                if(!(k&1))
                 if((k&1))
                 {
-                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
-                    std::cout<<tmp; std::cout.flush();
+//                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
+//                    std::cout<<tmp; std::cout.flush();
                     event.set(async::Event::erm_afterNotifyAll);
-                    sprintf(tmp, "after set  %p\n", async::impl::Coro::current());
-                    std::cout<<tmp; std::cout.flush();
+//                    sprintf(tmp, "after set  %p\n", async::impl::Coro::current());
+//                    std::cout<<tmp; std::cout.flush();
                 }
                 else
                 {
-                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
-                    std::cout<<tmp; std::cout.flush();
-                    event.wait();//TODO need full transaction here
-                    sprintf(tmp, "after wait %p\n", async::impl::Coro::current());
-                    std::cout<<tmp; std::cout.flush();
+//                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
+//                    std::cout<<tmp; std::cout.flush();
+                    event.wait();
+//                    sprintf(tmp, "after wait %p\n", async::impl::Coro::current());
+//                    std::cout<<tmp; std::cout.flush();
                 }
 
             });
         }
 
-        for(size_t k(0); k<30; k++)
+        for(size_t k(0); k<10; k++)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             event.set(async::Event::erm_afterNotifyAll);
         }
 

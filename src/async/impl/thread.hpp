@@ -76,7 +76,7 @@ namespace async { namespace impl
 
                 //do work
                 {
-                    _scheduler->coroActivate(workPiece);
+                    _scheduler->contextActivate(workPiece);
                 }
 
                 lock.lock();
