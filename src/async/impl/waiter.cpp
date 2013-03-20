@@ -41,9 +41,7 @@ namespace async { namespace impl
 
     void Waiter::push(const ::async::Event &waitable)
     {
-        const EventPtr &event = waitable._implEvent;
-        SynchronizerPtr synchronizer(event);
-        assert(0);
+        _synchronizers.push_back(waitable._implEvent);
     }
 
 //    void Waiter::push(const ::async::Mutex &waitable)
