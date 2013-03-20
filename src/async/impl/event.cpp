@@ -1,6 +1,4 @@
 #include "async/impl/event.hpp"
-#include "async/impl/coro.hpp"
-#include "async/impl/scheduler.hpp"
 
 #include <cassert>
 
@@ -14,11 +12,6 @@ namespace async { namespace impl
 
     Event::~Event()
     {
-        assert(_waiters.empty());
-        for(const CoroPtr &coro : _waiters)
-        {
-            coro->scheduler()->coroReadyIfHolded(coro.get());
-        }
     }
 
     void Event::set(::async::Event::EResetMode erm)
@@ -32,7 +25,7 @@ namespace async { namespace impl
 
         if(_state)
         {
-            assert(_waiters.empty());
+            assert(!holdsAmount());
 
             switch(_erm)
             {
@@ -50,7 +43,7 @@ namespace async { namespace impl
             return;
         }
 
-        if(_waiters.empty())
+        if(!holdsAmount())
         {
             switch(_erm)
             {
@@ -75,28 +68,13 @@ namespace async { namespace impl
             assert(0);
         case ::async::Event::erm_immediately:
         case ::async::Event::erm_afterNotifyOne:
-            {
-                CoroPtr &coro = _waiters.front();
-                coro->scheduler()->coroReadyIfHolded(coro.get());
-                coro.reset();
-                _waiters.pop_front();
-            }
+            activateOthers(1);
             break;
         case ::async::Event::erm_afterNotifyAll:
-            for(CoroPtr &coro : _waiters)
-            {
-                coro->scheduler()->coroReadyIfHolded(coro.get());
-                coro.reset();
-            }
-            _waiters.clear();
+            activateOthers(-1);
             break;
         case ::async::Event::erm_manual:
-            for(CoroPtr &coro : _waiters)
-            {
-                coro->scheduler()->coroReadyIfHolded(coro.get());
-                coro.reset();
-            }
-            _waiters.clear();
+            activateOthers(-1);
             _state = true;
             break;
         }
@@ -111,47 +89,33 @@ namespace async { namespace impl
     void Event::reset()
     {
         std::lock_guard<std::mutex> l(_mtx);
-        assert(_waiters.empty());
+        assert(!holdsAmount());
         _state = false;
     }
 
     void Event::wait()
     {
-        Coro *coro = Coro::current();
-        assert(coro);
-        if(!coro)
+        std::unique_lock<std::mutex> l(_mtx);
+
+        if(_state)
         {
-            throw !"must be called in async context";
-        }
-
-        Scheduler *scheduler = coro->scheduler();
-
-        {
-            std::unique_lock<std::mutex> l(_mtx);
-
-            assert(_waiters.size() < 200);
-            if(_state)
+            switch(_erm)
             {
-                switch(_erm)
-                {
-                default:
-                case ::async::Event::erm_default:
-                    assert(0);
-                case ::async::Event::erm_afterNotifyOne:
-                case ::async::Event::erm_immediately:
-                case ::async::Event::erm_afterNotifyAll:
-                    _state = false;
-                    break;
-                case ::async::Event::erm_manual:
-                    break;
-                }
-                return;
+            default:
+            case ::async::Event::erm_default:
+                assert(0);
+            case ::async::Event::erm_afterNotifyOne:
+            case ::async::Event::erm_immediately:
+            case ::async::Event::erm_afterNotifyAll:
+                _state = false;
+                break;
+            case ::async::Event::erm_manual:
+                break;
             }
-
-            _waiters.push_back(coro->shared_from_this());
-
-            l.release();
-            scheduler->contextDeactivate(coro, &_mtx);
+            return;
         }
+
+        l.release();
+        holdSelf();
     }
 }}

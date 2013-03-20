@@ -42,7 +42,7 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 1);
+        async::ThreadPool tp(tu, 5);
 
         std::atomic<size_t> cnt(0);
         size_t amount = 300;
@@ -67,17 +67,17 @@ int main()
                 {
 //                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
-                    //event.wait();
+                    event.wait();
 
-                    std::vector<async::Event> container;
-                    container.push_back(event);
-                    container.push_back(event2);
+//                    std::vector<async::Event> container;
+//                    container.push_back(event);
+//                    container.push_back(event2);
 
 
-                    async::wait(event, event2, container);
+//                    async::wait(event, event2, container);
 
-//                    sprintf(tmp, "after wait %p\n", async::impl::Coro::current());
-//                    std::cout<<tmp; std::cout.flush();
+                    sprintf(tmp, "after wait %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
                 }
 
                 cnt++;

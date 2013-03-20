@@ -25,6 +25,7 @@ set(INC_IMPL
     ${PSRC}/impl/contextEngine.hpp
     ${PSRC}/impl/event.hpp
     ${PSRC}/impl/waiter.hpp
+    ${PSRC}/impl/synchronizer.hpp
 )
 source_group(include/impl FILES ${INC_IMPL})
 
@@ -47,6 +48,7 @@ set(SRC_IMPL
     ${PSRC}/impl/contextEngine.cpp
     ${PSRC}/impl/event.cpp
     ${PSRC}/impl/waiter.cpp
+    ${PSRC}/impl/synchronizer.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
 

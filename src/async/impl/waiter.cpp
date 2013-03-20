@@ -1,5 +1,6 @@
 #include "async/impl/waiter.hpp"
 #include "async/event.hpp"
+#include "async/impl/event.hpp"
 
 #include <cassert>
 
@@ -40,7 +41,8 @@ namespace async { namespace impl
 
     void Waiter::push(const ::async::Event &waitable)
     {
-        const EventPtr &implPtr = waitable._implEvent;
+        const EventPtr &event = waitable._implEvent;
+        SynchronizerPtr synchronizer(event);
         assert(0);
     }
 

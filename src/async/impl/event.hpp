@@ -2,17 +2,14 @@
 #define _ASYNC_IMPL_EVENT_HPP_
 
 #include "async/event.hpp"
+#include "async/impl/synchronizer.hpp"
 
 #include <memory>
-#include <mutex>
-#include <deque>
 
 namespace async { namespace impl
 {
-    class Coro;
-    typedef std::shared_ptr<Coro> CoroPtr;
-
     class Event
+            : public Synchronizer
     {
     private:
         Event(const Event &other);//not impl
@@ -30,11 +27,8 @@ namespace async { namespace impl
         void wait();
 
     private:
-        std::mutex _mtx;
         ::async::Event::EResetMode _erm;
         bool _state;
-
-        std::deque<CoroPtr> _waiters;
     };
 }}
 
