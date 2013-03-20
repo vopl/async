@@ -9,6 +9,8 @@ namespace async
     {
         class Event;
         typedef std::shared_ptr<Event> EventPtr;
+
+        class Waiter;
     }
 
     class Event
@@ -42,6 +44,7 @@ namespace async
         void wait();
 
     private:
+        friend class impl::Waiter;
         impl::EventPtr _implEvent;
     };
 }
