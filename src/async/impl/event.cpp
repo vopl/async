@@ -7,7 +7,7 @@
 namespace async { namespace impl
 {
     Event::Event(::async::Event::EResetMode erm, bool initial)
-        : _erm_(::async::Event::erm_default == erm ? ::async::Event::erm_afterNotifyOne : erm)
+        : _erm(::async::Event::erm_default == erm ? ::async::Event::erm_afterNotifyOne : erm)
         , _state(initial)
     {
     }
@@ -25,16 +25,16 @@ namespace async { namespace impl
     {
         std::lock_guard<std::mutex> l(_mtx);
 
-        if(::async::Event::erm_default == erm)
+        if(::async::Event::erm_default != erm)
         {
-            erm = _erm_;
+            _erm = erm;
         }
 
         if(_state)
         {
             assert(_waiters.empty());
 
-            switch(erm)
+            switch(_erm)
             {
             default:
             case ::async::Event::erm_default:
@@ -52,7 +52,7 @@ namespace async { namespace impl
 
         if(_waiters.empty())
         {
-            switch(erm)
+            switch(_erm)
             {
             default:
             case ::async::Event::erm_default:
@@ -68,7 +68,7 @@ namespace async { namespace impl
             return;
         }
 
-        switch(erm)
+        switch(_erm)
         {
         default:
         case ::async::Event::erm_default:
@@ -132,7 +132,7 @@ namespace async { namespace impl
             assert(_waiters.size() < 200);
             if(_state)
             {
-                switch(_erm_)
+                switch(_erm)
                 {
                 default:
                 case ::async::Event::erm_default:

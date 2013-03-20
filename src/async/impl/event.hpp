@@ -31,7 +31,7 @@ namespace async { namespace impl
 
     private:
         std::mutex _mtx;
-        ::async::Event::EResetMode _erm_;
+        ::async::Event::EResetMode _erm;
         bool _state;
 
         std::deque<CoroPtr> _waiters;
