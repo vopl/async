@@ -27,6 +27,7 @@ namespace async
     Event &Event::operator=(const Event &other)
     {
         _implEvent = other._implEvent;
+        return *this;
     }
 
     Event &Event::operator=(Event &&other)
@@ -53,11 +54,5 @@ namespace async
     void Event::reset()
     {
         return _implEvent->reset();
-    }
-
-
-    void Event::wait()
-    {
-        return _implEvent->wait();
     }
 }

@@ -42,7 +42,7 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 1);
+        async::ThreadPool tp(tu, 40);
 
         std::atomic<size_t> cnt(0);
         size_t amount = 300;
@@ -57,22 +57,29 @@ int main()
 //                if(!(k&1))
                 if((k&1))
                 {
-//                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
-//                    std::cout<<tmp; std::cout.flush();
-                    event.set(async::Event::erm_afterNotifyOne);
-//                    sprintf(tmp, "after set  %p\n", async::impl::Coro::current());
-//                    std::cout<<tmp; std::cout.flush();
+                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
+
+                    size_t i=rand() > RAND_MAX/2;
+                    if(!i)
+                    {
+                        event.set(async::Event::erm_afterNotifyOne);
+                    }
+                    else
+                    {
+                        event2.set(async::Event::erm_afterNotifyOne);
+                    }
+                    sprintf(tmp, "after set  %p(%d)\n", async::impl::Coro::current(), (int)i);
+                    std::cout<<tmp; std::cout.flush();
                 }
                 else
                 {
-//                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
-//                    std::cout<<tmp; std::cout.flush();
+                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
 
-//                    event.wait();
+                    size_t i=async::waitAny(event, event2);
 
-                    async::wait(event, event2);
-
-                    sprintf(tmp, "after wait %p\n", async::impl::Coro::current());
+                    sprintf(tmp, "after wait %p (%d)\n", async::impl::Coro::current(), (int)i);
                     std::cout<<tmp; std::cout.flush();
                 }
 
@@ -82,8 +89,16 @@ int main()
 
         while(cnt < amount)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            event.set(async::Event::erm_afterNotifyOne);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            size_t i=rand() > RAND_MAX/2;
+            if(!i)
+            {
+                event.set(async::Event::erm_afterNotifyOne);
+            }
+            else
+            {
+                event2.set(async::Event::erm_afterNotifyOne);
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

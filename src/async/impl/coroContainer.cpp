@@ -86,8 +86,6 @@ namespace async { namespace impl
         assert(coro->hasCode());
 
         CoroPtr sp(coro->shared_from_this());
-        Scheduler *scheduler = static_cast<Scheduler *>(this);
-        ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
         {
             std::lock_guard<std::mutex> l(_mtx);
@@ -108,8 +106,6 @@ namespace async { namespace impl
     void CoroContainer::markCoroHold(Coro *coro)
     {
         CoroPtr sp(coro->shared_from_this());
-        Scheduler *scheduler = static_cast<Scheduler *>(this);
-        ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
         {
             std::lock_guard<std::mutex> l(_mtx);
@@ -132,8 +128,6 @@ namespace async { namespace impl
     void CoroContainer::markCoroComplete(Coro *coro)
     {
         CoroPtr sp(coro->shared_from_this());
-        Scheduler *scheduler = static_cast<Scheduler *>(this);
-        ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
         {
             std::lock_guard<std::mutex> l(_mtx);
@@ -164,7 +158,6 @@ namespace async { namespace impl
 
         CoroPtr sp(coro->shared_from_this());
         Scheduler *scheduler = static_cast<Scheduler *>(this);
-        ContextEngine *contextEngine = static_cast<ContextEngine *>(scheduler);
 
         {
             std::lock_guard<std::mutex> l(_mtx);
@@ -172,7 +165,7 @@ namespace async { namespace impl
             std::set<CoroPtr>::iterator holdIter = _hold.find(sp);
             if(_hold.end() == holdIter)
             {
-                assert(!"check this, secondary context wakeup after multi wait");
+                //assert(!"check this, secondary context wakeup after multi wait");
                 //already execute
                 return;
             }

@@ -11,7 +11,7 @@ namespace async
      *
      */
     template <class... Waitable>
-    size_t wait(const Waitable&... waitables);
+    size_t waitAny(const Waitable&... waitables);
 
     class Event;
     class Mutex;
@@ -19,12 +19,13 @@ namespace async
 
 namespace async { namespace impl
 {
-    class Waiter;
+    class AnyWaiter;
+    typedef std::shared_ptr<AnyWaiter> AnyWaiterPtr;
 
-    Waiter *waiterAlloc();
-    void waiterPush(Waiter *waiter, const ::async::Event &waitable);
-    void waiterPush(Waiter *waiter, const ::async::Mutex &waitable);
-    size_t waiterExec(Waiter *waiter);
+    AnyWaiterPtr waiterAlloc();
+    void waiterPush(AnyWaiterPtr waiter, const ::async::Event &waitable);
+    void waiterPush(AnyWaiterPtr waiter, const ::async::Mutex &waitable);
+    size_t waiterExec(AnyWaiterPtr waiter);
 
     template <
             class Container,
@@ -40,7 +41,7 @@ namespace async { namespace impl
                 ) &&
                 true>::type
             >
-    void waiterPush(Waiter *waiter, const Container &container)
+    void waiterPush(AnyWaiterPtr waiter, const Container &container)
     {
         for(const auto &waitable : container)
         {
@@ -48,10 +49,10 @@ namespace async { namespace impl
         }
     }
 
-    inline void waiterCollect(Waiter *waiter){}
+    inline void waiterCollect(AnyWaiterPtr waiter){}
 
     template <class FirstWaitable, class... Waitable>
-    void waiterCollect(Waiter *waiter, const FirstWaitable &firstWaitable, const Waitable&... waitables)
+    void waiterCollect(AnyWaiterPtr waiter, const FirstWaitable &firstWaitable, const Waitable&... waitables)
     {
         waiterPush(waiter, firstWaitable);
         waiterCollect(waiter, waitables...);
@@ -62,9 +63,9 @@ namespace async { namespace impl
 namespace async
 {
     template <class... waitable>
-    size_t wait(const waitable&... waitables)
+    size_t waitAny(const waitable&... waitables)
     {
-        impl::Waiter *waiter = impl::waiterAlloc();
+        impl::AnyWaiterPtr waiter = impl::waiterAlloc();
         impl::waiterCollect(waiter, waitables...);
         size_t res = impl::waiterExec(waiter);
         return res;

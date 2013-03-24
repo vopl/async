@@ -10,6 +10,10 @@ namespace async { namespace impl
     class Coro;
     typedef std::shared_ptr<Coro> CoroPtr;
 
+    class AnyWaiter;
+    typedef std::shared_ptr<AnyWaiter> AnyWaiterPtr;
+
+    ////////////////////////////////////////////////////////////////////////////////
     class Synchronizer
     {
     protected:
@@ -19,12 +23,23 @@ namespace async { namespace impl
     protected:
         std::mutex _mtx;
 
-        size_t holdsAmount();
-        void activateOthers(size_t holdsAmount=1);
-        void holdSelf();
+    private:
+        //from SynchronizerWaiter
+        friend class ::async::impl::AnyWaiter;
+        virtual bool waiterAdd(AnyWaiterPtr waiter);
+        void waiterDel(AnyWaiterPtr waiter);
+
+    protected:
+        //from waiterAdd
+        void waiterAddInternal(AnyWaiterPtr waiter);
+
+    protected:
+        size_t waitersAmount();
+
+        void notify(size_t waitersAmount=1);
 
     private:
-        std::deque<CoroPtr> _holds;
+        std::deque<AnyWaiterPtr> _waiters;
     };
     typedef std::shared_ptr<Synchronizer> SynchronizerPtr;
 }}

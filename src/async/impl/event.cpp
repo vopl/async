@@ -16,7 +16,7 @@ namespace async { namespace impl
 
     void Event::set(::async::Event::EResetMode erm)
     {
-        std::lock_guard<std::mutex> l(_mtx);
+        std::unique_lock<std::mutex> l(_mtx);
 
         if(::async::Event::erm_default != erm)
         {
@@ -25,7 +25,7 @@ namespace async { namespace impl
 
         if(_state)
         {
-            assert(!holdsAmount());
+            assert(!waitersAmount());
 
             switch(_erm)
             {
@@ -43,7 +43,7 @@ namespace async { namespace impl
             return;
         }
 
-        if(!holdsAmount())
+        if(!waitersAmount())
         {
             switch(_erm)
             {
@@ -68,14 +68,17 @@ namespace async { namespace impl
             assert(0);
         case ::async::Event::erm_immediately:
         case ::async::Event::erm_afterNotifyOne:
-            activateOthers(1);
+            l.release();
+            notify(1);
             break;
         case ::async::Event::erm_afterNotifyAll:
-            activateOthers(-1);
+            l.release();
+            notify(-1);
             break;
         case ::async::Event::erm_manual:
-            activateOthers(-1);
             _state = true;
+            l.release();
+            notify(-1);
             break;
         }
     }
@@ -89,33 +92,42 @@ namespace async { namespace impl
     void Event::reset()
     {
         std::lock_guard<std::mutex> l(_mtx);
-        assert(!holdsAmount());
+        assert(!waitersAmount());
         _state = false;
     }
 
-    void Event::wait()
+    bool Event::waiterAdd(AnyWaiterPtr waiter)
     {
         std::unique_lock<std::mutex> l(_mtx);
 
         if(_state)
         {
+            assert(!waitersAmount());
+
             switch(_erm)
             {
             default:
             case ::async::Event::erm_default:
                 assert(0);
-            case ::async::Event::erm_afterNotifyOne:
             case ::async::Event::erm_immediately:
+            case ::async::Event::erm_afterNotifyOne:
             case ::async::Event::erm_afterNotifyAll:
                 _state = false;
-                break;
+                l.release();
+                notify(1);
+                return false;
             case ::async::Event::erm_manual:
-                break;
+                l.release();
+                notify(1);
+                return false;
             }
-            return;
+
+            assert(!"never here");
+            return false;
         }
 
-        l.release();
-        holdSelf();
+        waiterAddInternal(waiter);
+        return true;
     }
+
 }}

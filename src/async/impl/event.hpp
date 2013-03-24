@@ -24,7 +24,8 @@ namespace async { namespace impl
         bool isSet();
         void reset();
 
-        void wait();
+    private:
+        virtual bool waiterAdd(AnyWaiterPtr waiter);
 
     private:
         ::async::Event::EResetMode _erm;

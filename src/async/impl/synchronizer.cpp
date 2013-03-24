@@ -1,4 +1,5 @@
 #include "async/impl/synchronizer.hpp"
+#include "async/impl/anyWaiter.hpp"
 #include "async/impl/coro.hpp"
 #include "async/impl/scheduler.hpp"
 
@@ -13,62 +14,67 @@ namespace async { namespace impl
 
     Synchronizer::~Synchronizer()
     {
-        assert(_holds.empty());
-        for(const CoroPtr &coro : _holds)
+        //assert(_waiters.empty());
+        for(const AnyWaiterPtr &waiter : _waiters)
         {
-            coro->scheduler()->coroReadyIfHolded(coro.get());
+            bool b = waiter->notify(this);
+            assert(!b);
         }
     }
 
-    size_t Synchronizer::holdsAmount()
+    bool Synchronizer::waiterAdd(AnyWaiterPtr waiter)
     {
-        assert(!_mtx.try_lock() && "must be already locked");
-        return _holds.size();
+        std::lock_guard<std::mutex> l(_mtx);
+        waiterAddInternal(waiter);
+        return true;
     }
 
-    void Synchronizer::activateOthers(size_t holdsAmount)
+    void Synchronizer::waiterDel(AnyWaiterPtr waiter)
     {
-        assert(!_mtx.try_lock() && "must be already locked");
+        std::lock_guard<std::mutex> l(_mtx);
 
-        if(holdsAmount >= _holds.size())
+        std::deque<AnyWaiterPtr>::iterator iter = _waiters.begin();
+        std::deque<AnyWaiterPtr>::iterator end = _waiters.end();
+        for(; iter!=end; iter++)
         {
-            for(CoroPtr &coro : _holds)
+            if(waiter == *iter)
             {
-                coro->scheduler()->coroReadyIfHolded(coro.get());
-                coro.reset();
+                _waiters.erase(iter);
+                return;
             }
-            _holds.clear();
         }
-        else if(holdsAmount)
-        {
-            for(size_t idx(0); idx<holdsAmount; idx++)
-            {
-                CoroPtr &coro = _holds[idx];
-                coro->scheduler()->coroReadyIfHolded(coro.get());
-                coro.reset();
-            }
-            _holds.erase(_holds.begin(), _holds.begin()+holdsAmount);
-        }
+        //assert(!"already deleted?");
     }
 
-    void Synchronizer::holdSelf()
+    void Synchronizer::waiterAddInternal(AnyWaiterPtr waiter)
     {
         assert(!_mtx.try_lock() && "must be already locked");
-
-        Coro *coro = Coro::current();
-        assert(coro);
-        if(!coro)
-        {
-            throw !"must be called in async context";
-        }
-
-        Scheduler *scheduler = coro->scheduler();
-
-        assert(holdsAmount() < 200);
-        _holds.push_back(coro->shared_from_this());
-
-        scheduler->contextDeactivate(coro, &_mtx);
+        _waiters.push_back(waiter);
     }
 
+    size_t Synchronizer::waitersAmount()
+    {
+        assert(!_mtx.try_lock() && "must be already locked");
+        return _waiters.size();
+    }
 
+    void Synchronizer::notify(size_t waitersAmount)
+    {
+        assert(waitersAmount);
+        assert(!_mtx.try_lock() && "must be already locked");
+
+        std::deque<AnyWaiterPtr> waiters(_waiters);
+        _mtx.unlock();
+
+        for(const AnyWaiterPtr waiter : waiters)
+        {
+            if(waiter->notify(this))
+            {
+                if(!--waitersAmount)
+                {
+                    return;
+                }
+            }
+        }
+    }
 }}

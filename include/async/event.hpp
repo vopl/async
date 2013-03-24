@@ -10,7 +10,7 @@ namespace async
         class Event;
         typedef std::shared_ptr<Event> EventPtr;
 
-        class Waiter;
+        class AnyWaiter;
     }
 
     class Event
@@ -41,10 +41,8 @@ namespace async
         bool isSet();
         void reset();
 
-        void wait();
-
     private:
-        friend class impl::Waiter;
+        friend class impl::AnyWaiter;
         impl::EventPtr _implEvent;
     };
 }
