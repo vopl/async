@@ -67,7 +67,7 @@ namespace async { namespace impl
         _mtx.unlock();
 
         size_t result(0);
-        for(const AnyWaiterPtr waiter : waiters)
+        for(const AnyWaiterPtr &waiter : waiters)
         {
             if(waiter->notify(this))
             {
@@ -81,4 +81,20 @@ namespace async { namespace impl
 
         return result;
     }
+
+    CoroPtr Synchronizer::notifyOneAndGetCoro()
+    {
+        assert(!_mtx.try_lock() && "must be already locked");
+
+        for(const AnyWaiterPtr &waiter : _waiters)
+        {
+            if(waiter->notify(this))
+            {
+                return waiter->getCoro();
+            }
+        }
+
+        return CoroPtr();
+    }
+
 }}

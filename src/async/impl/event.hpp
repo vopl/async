@@ -1,10 +1,7 @@
 #ifndef _ASYNC_IMPL_EVENT_HPP_
 #define _ASYNC_IMPL_EVENT_HPP_
 
-#include "async/event.hpp"
 #include "async/impl/synchronizer.hpp"
-
-#include <memory>
 
 namespace async { namespace impl
 {
@@ -17,7 +14,7 @@ namespace async { namespace impl
 
     public:
         Event(bool autoReset);
-        ~Event();
+        virtual ~Event();
 
         size_t set();
         size_t pulse();

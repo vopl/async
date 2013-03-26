@@ -26,6 +26,7 @@ namespace async
 
         void swap(Event &other);
 
+        //void wait();
         size_t set();
         size_t pulse();
 

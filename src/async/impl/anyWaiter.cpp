@@ -1,6 +1,8 @@
 #include "async/impl/anyWaiter.hpp"
 #include "async/event.hpp"
+#include "async/mutex.hpp"
 #include "async/impl/event.hpp"
+#include "async/impl/mutex.hpp"
 #include "async/impl/coro.hpp"
 #include "async/impl/scheduler.hpp"
 
@@ -18,10 +20,10 @@ namespace async { namespace impl
         waiter->push(waitable);
     }
 
-//    void waiterPush(Waiter *waiter, const ::async::Mutex &waitable)
-//    {
-//        waiter->push(waitable);
-//    }
+    void waiterPush(AnyWaiterPtr waiter, const ::async::Mutex &waitable)
+    {
+        waiter->push(waitable);
+    }
 
     size_t waiterExec(AnyWaiterPtr waiter)
     {
@@ -46,13 +48,17 @@ namespace async { namespace impl
         _synchronizers.push_back(waitable._implEvent);
     }
 
-//    void Waiter::push(const ::async::Mutex &waitable)
-//    {
-//    }
+    void AnyWaiter::push(const ::async::Mutex &waitable)
+    {
+        _synchronizers.push_back(waitable._implMutex);
+    }
 
     size_t AnyWaiter::exec()
     {
         std::unique_lock<std::mutex> l(_mtx);
+
+        _coro = Coro::current()->shared_from_this();
+        assert(_coro);
 
         for(size_t i(0); i<_synchronizers.size(); i++)
         {
@@ -77,8 +83,6 @@ namespace async { namespace impl
             return _notified;
         }
 
-        _coro = Coro::current()->shared_from_this();
-        assert(_coro);
         l.release();
 
         Scheduler *scheduler = _coro->scheduler();
@@ -87,6 +91,11 @@ namespace async { namespace impl
         std::lock_guard<std::mutex> l2(_mtx);
         assert(_notified != (size_t)-1);
         return _notified;
+    }
+
+    const CoroPtr &AnyWaiter::getCoro()
+    {
+        return _coro;
     }
 
     bool AnyWaiter::notify(Synchronizer *notifier)
@@ -106,7 +115,6 @@ namespace async { namespace impl
                 assert(_coro);
                 Scheduler *scheduler = _coro->scheduler();
                 scheduler->coroReadyIfHolded(_coro.get());
-                _coro.reset();
                 break;
             }
         }
@@ -137,5 +145,4 @@ namespace async { namespace impl
 
         return true;
     }
-
 }}

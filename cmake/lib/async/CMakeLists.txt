@@ -12,6 +12,7 @@ set(INC
     ${PINC}/scheduler.hpp
     ${PINC}/codeManager.hpp
     ${PINC}/event.hpp
+    ${PINC}/mutex.hpp
     ${PINC}/wait.hpp
 )
 source_group(include FILES ${INC})
@@ -24,18 +25,20 @@ set(INC_IMPL
     ${PSRC}/impl/coroContainer.hpp
     ${PSRC}/impl/contextEngine.hpp
     ${PSRC}/impl/event.hpp
+    ${PSRC}/impl/mutex.hpp
     ${PSRC}/impl/anyWaiter.hpp
     ${PSRC}/impl/synchronizer.hpp
 )
 source_group(include/impl FILES ${INC_IMPL})
 
 set(SRC
-	${PSRC}/threadUtilizer.cpp
-	${PSRC}/threadPool.cpp
+    ${PSRC}/threadUtilizer.cpp
+    ${PSRC}/threadPool.cpp
     ${PSRC}/threadState.cpp
     ${PSRC}/scheduler.cpp
     ${PSRC}/codeManager.cpp
     ${PSRC}/event.cpp
+    ${PSRC}/mutex.cpp
 )
 source_group(src FILES ${SRC})
 
@@ -47,6 +50,7 @@ set(SRC_IMPL
     ${PSRC}/impl/coroContainer.cpp
     ${PSRC}/impl/contextEngine.cpp
     ${PSRC}/impl/event.cpp
+    ${PSRC}/impl/mutex.cpp
     ${PSRC}/impl/anyWaiter.cpp
     ${PSRC}/impl/synchronizer.cpp
 )

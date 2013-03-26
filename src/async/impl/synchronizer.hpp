@@ -18,7 +18,7 @@ namespace async { namespace impl
     {
     protected:
         Synchronizer();
-        ~Synchronizer();
+        virtual ~Synchronizer();
 
     protected:
         std::mutex _mtx;
@@ -37,6 +37,7 @@ namespace async { namespace impl
         size_t waitersAmount();
 
         size_t notify(size_t waitersAmount=1);
+        CoroPtr notifyOneAndGetCoro();
 
     private:
         std::deque<AnyWaiterPtr> _waiters;

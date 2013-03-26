@@ -6,7 +6,7 @@ namespace async { namespace impl
 {
     Event::Event(bool autoReset)
         : _autoReset(autoReset)
-        , _state(autoReset)
+        , _state(false)
     {
     }
 

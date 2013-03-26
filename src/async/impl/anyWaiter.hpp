@@ -31,6 +31,8 @@ namespace async { namespace impl
 
         size_t exec();
 
+        const CoroPtr &getCoro();
+
     protected:
         //from Synchronizer
         friend class ::async::impl::Synchronizer;

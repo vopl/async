@@ -5,6 +5,7 @@
 #include "async/codeManager.hpp"
 #include "async/threadPool.hpp"
 #include "async/event.hpp"
+#include "async/mutex.hpp"
 #include "async/wait.hpp"
 #include "async/impl/coro.hpp"
 
@@ -42,21 +43,26 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 10);
+        async::ThreadPool tp(tu, 2);
 
         std::atomic<size_t> cnt(0);
         size_t amount = 300;
         async::Event event(true);
         async::Event event2(true);
+        async::Mutex mutex(false);
+        async::Mutex mutex2(false);
 
         for(size_t k(0); k<amount; k++)
         {
-            cm.spawn([k, &event, &event2, &cnt]{
+            cm.spawn([k, &event, &event2, &cnt, &mutex, &mutex2]{
                 char tmp[32];
                 (void)tmp;
 //                if(!(k&1))
                 if((k&1))
                 {
+                    sprintf(tmp, "pre set        %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
+                    async::waitAny(mutex);
                     sprintf(tmp, "set        %p\n", async::impl::Coro::current());
                     std::cout<<tmp; std::cout.flush();
 
@@ -71,9 +77,13 @@ int main()
                     }
                     sprintf(tmp, "after set  %p(%d)\n", async::impl::Coro::current(), (int)i);
                     std::cout<<tmp; std::cout.flush();
+                    mutex.unlock();
                 }
                 else
                 {
+                    sprintf(tmp, "pre wait        %p\n", async::impl::Coro::current());
+                    std::cout<<tmp; std::cout.flush();
+                    async::waitAny(mutex2);
                     sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
                     std::cout<<tmp; std::cout.flush();
 
@@ -81,6 +91,7 @@ int main()
 
                     sprintf(tmp, "after wait %p (%d)\n", async::impl::Coro::current(), (int)i);
                     std::cout<<tmp; std::cout.flush();
+                    mutex2.unlock();
                 }
 
                 cnt++;
