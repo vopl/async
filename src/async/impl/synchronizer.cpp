@@ -58,7 +58,7 @@ namespace async { namespace impl
         return _waiters.size();
     }
 
-    void Synchronizer::notify(size_t waitersAmount)
+    size_t Synchronizer::notify(size_t waitersAmount)
     {
         assert(waitersAmount);
         assert(!_mtx.try_lock() && "must be already locked");
@@ -66,15 +66,19 @@ namespace async { namespace impl
         std::deque<AnyWaiterPtr> waiters(_waiters);
         _mtx.unlock();
 
+        size_t result(0);
         for(const AnyWaiterPtr waiter : waiters)
         {
             if(waiter->notify(this))
             {
+                result++;
                 if(!--waitersAmount)
                 {
-                    return;
+                    return result;
                 }
             }
         }
+
+        return result;
     }
 }}

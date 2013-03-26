@@ -42,12 +42,12 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 40);
+        async::ThreadPool tp(tu, 10);
 
         std::atomic<size_t> cnt(0);
         size_t amount = 300;
-        async::Event event;
-        async::Event event2;
+        async::Event event(true);
+        async::Event event2(true);
 
         for(size_t k(0); k<amount; k++)
         {
@@ -63,11 +63,11 @@ int main()
                     size_t i=rand() > RAND_MAX/2;
                     if(!i)
                     {
-                        event.set(async::Event::erm_afterNotifyOne);
+                        event.set();
                     }
                     else
                     {
-                        event2.set(async::Event::erm_afterNotifyOne);
+                        event2.set();
                     }
                     sprintf(tmp, "after set  %p(%d)\n", async::impl::Coro::current(), (int)i);
                     std::cout<<tmp; std::cout.flush();
@@ -93,11 +93,11 @@ int main()
             size_t i=rand() > RAND_MAX/2;
             if(!i)
             {
-                event.set(async::Event::erm_afterNotifyOne);
+                event.set();
             }
             else
             {
-                event2.set(async::Event::erm_afterNotifyOne);
+                event2.set();
             }
         }
 

@@ -5,8 +5,8 @@
 
 namespace async
 {
-    Event::Event(EResetMode erm, bool initial)
-        : _implEvent(new impl::Event(erm, initial))
+    Event::Event(bool autoReset)
+        : _implEvent(new impl::Event(autoReset))
     {
     }
 
@@ -41,9 +41,14 @@ namespace async
         _implEvent.swap(other._implEvent);
     }
 
-    void Event::set(EResetMode erm)
+    size_t Event::set()
     {
-        return _implEvent->set(erm);
+        return _implEvent->set();
+    }
+
+    size_t Event::pulse()
+    {
+        return _implEvent->pulse();
     }
 
     bool Event::isSet()
@@ -51,7 +56,7 @@ namespace async
         return _implEvent->isSet();
     }
 
-    void Event::reset()
+    bool Event::reset()
     {
         return _implEvent->reset();
     }

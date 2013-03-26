@@ -16,17 +16,7 @@ namespace async
     class Event
     {
     public:
-        enum EResetMode
-        {
-            erm_default,
-            erm_immediately,
-            erm_afterNotifyOne,
-            erm_afterNotifyAll,
-            erm_manual
-        };
-
-    public:
-        Event(EResetMode erm = erm_afterNotifyOne, bool initial = false);
+        Event(bool autoReset);
         Event(const Event &other);
         Event(Event &&other);
         ~Event();
@@ -36,10 +26,11 @@ namespace async
 
         void swap(Event &other);
 
-        void set(EResetMode erm = erm_default);
+        size_t set();
+        size_t pulse();
 
         bool isSet();
-        void reset();
+        bool reset();
 
     private:
         friend class impl::AnyWaiter;

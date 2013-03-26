@@ -16,19 +16,20 @@ namespace async { namespace impl
         Event &operator=(const Event &other);//not impl
 
     public:
-        Event(::async::Event::EResetMode erm, bool initial);
+        Event(bool autoReset);
         ~Event();
 
-        void set(::async::Event::EResetMode erm);
+        size_t set();
+        size_t pulse();
 
         bool isSet();
-        void reset();
+        bool reset();
 
     private:
         virtual bool waiterAdd(AnyWaiterPtr waiter);
 
     private:
-        ::async::Event::EResetMode _erm;
+        bool _autoReset;
         bool _state;
     };
 }}

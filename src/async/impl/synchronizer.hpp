@@ -36,7 +36,7 @@ namespace async { namespace impl
     protected:
         size_t waitersAmount();
 
-        void notify(size_t waitersAmount=1);
+        size_t notify(size_t waitersAmount=1);
 
     private:
         std::deque<AnyWaiterPtr> _waiters;
