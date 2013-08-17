@@ -1,9 +1,9 @@
 #ifndef _ASYNC_IMPL_CONTEXTENGINE_HPP_
 #define _ASYNC_IMPL_CONTEXTENGINE_HPP_
 
-#include "config.h"
+#include "async/config.h"
 
-#if defined(HAVE_UCONTEXT_H)
+#if ASYNCSCHEDULER_CONTEXTENGINE_UCONTEXT
 #   include <ucontext.h>
 #else
 #   error not have ucontext.h
