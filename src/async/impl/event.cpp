@@ -1,4 +1,5 @@
 #include "async/impl/event.hpp"
+#include "async/impl/anyWaiter.hpp"
 
 #include <cassert>
 
@@ -91,10 +92,12 @@ namespace async { namespace impl
         {
             assert(!waitersAmount());
 
-            if(_autoReset)
+            if(waiter->notify(this))
             {
-                _state = false;
-                return false;
+                if(_autoReset)
+                {
+                    _state = false;
+                }
             }
 
             return false;

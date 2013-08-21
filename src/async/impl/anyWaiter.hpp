@@ -4,6 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <deque>
+#include <atomic>
 
 namespace async
 {
@@ -15,6 +16,8 @@ namespace async { namespace impl
 {
     class Synchronizer;
     typedef std::shared_ptr<Synchronizer> SynchronizerPtr;
+    class Mutex;
+    class Event;
 
     class Coro;
     typedef std::shared_ptr<Coro> CoroPtr;
@@ -36,12 +39,18 @@ namespace async { namespace impl
     protected:
         //from Synchronizer
         friend class ::async::impl::Synchronizer;
+        friend class ::async::impl::Event;
+        friend class ::async::impl::Mutex;
         bool notify(Synchronizer *notifier);
 
     private:
-        std::mutex  _mtx;
+        //std::mutex  _mtx;
         std::deque<SynchronizerPtr> _synchronizers;
-        size_t _notified;
+        std::deque<SynchronizerPtr> _synchronizersInitial;
+        std::atomic<size_t> _notified;
+        static const size_t markActive = (size_t)-1;
+        static const size_t markPreNotified = (size_t)-2;
+        static const size_t markDeactivating = (size_t)-3;
         CoroPtr _coro;
     };
 

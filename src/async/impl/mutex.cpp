@@ -64,8 +64,11 @@ namespace async { namespace impl
         std::lock_guard<std::mutex> l(_mtx);
         if(!_owner)
         {
-            _owner = waiter->getCoro();
-            _ownerDepth++;
+            if(waiter->notify(this))
+            {
+                _owner = waiter->getCoro();
+                _ownerDepth++;
+            }
             return false;
         }
 
@@ -73,7 +76,10 @@ namespace async { namespace impl
         {
             if(_owner == waiter->getCoro())
             {
-                _ownerDepth++;
+                if(waiter->notify(this))
+                {
+                    _ownerDepth++;
+                }
                 return false;
             }
         }

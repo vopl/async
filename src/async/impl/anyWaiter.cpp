@@ -33,7 +33,7 @@ namespace async { namespace impl
 
 
     AnyWaiter::AnyWaiter()
-        : _notified(-1)
+        : _notified(markActive)
     {
 
     }
@@ -45,52 +45,88 @@ namespace async { namespace impl
 
     void AnyWaiter::push(const ::async::Event &waitable)
     {
-        _synchronizers.push_back(waitable._implEvent);
+        _synchronizersInitial.push_back(waitable._implEvent);
     }
 
     void AnyWaiter::push(const ::async::Mutex &waitable)
     {
-        _synchronizers.push_back(waitable._implMutex);
+        _synchronizersInitial.push_back(waitable._implMutex);
     }
 
     size_t AnyWaiter::exec()
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        //LOCK std::unique_lock<std::mutex> l(_mtx);
 
         _coro = Coro::current()->shared_from_this();
         assert(_coro);
 
-        for(size_t i(0); i<_synchronizers.size(); i++)
+        for(size_t i(0); i<_synchronizersInitial.size(); i++)
         {
+            _synchronizers.push_back(_synchronizersInitial[i]);
             if(!_synchronizers[i]->waiterAdd(shared_from_this()))
             {
-                _notified = i;
+                assert(_notified.load() == i);
 
-                std::deque<SynchronizerPtr> synchronizers;
-                synchronizers.swap(_synchronizers);
-
-                l.unlock();
-                for(size_t iRollback(0); iRollback<i; iRollback++)
+                for(size_t j(0); j<i; j++)
                 {
-                    synchronizers[iRollback]->waiterDel(shared_from_this());
+                    _synchronizers[j]->waiterDel(shared_from_this());
                 }
+                _synchronizers.clear();
+
                 return i;
             }
         }
 
-        if(_notified != (size_t)-1)
+        //LOCK l.release();
+
+        bool doLoop = true;
+        while(doLoop)
         {
-            return _notified;
+            size_t was = markActive;
+            if(_notified.compare_exchange_weak(was, markDeactivating))
+            {
+                Scheduler *scheduler = _coro->scheduler();
+                scheduler->contextDeactivate(_coro.get(), &_notified, markActive);
+                break;
+            }
+
+            switch(was)
+            {
+            case markActive:
+                //await more
+                break;
+            case markPreNotified:
+                //await more
+                std::this_thread::yield();
+                break;
+            case markDeactivating:
+                //impossible
+                abort();
+                break;
+            default:
+                assert(was < 1024);
+                doLoop = false;
+                break;
+            }
         }
 
-        l.release();
 
-        Scheduler *scheduler = _coro->scheduler();
-        scheduler->contextDeactivate(_coro.get(), &_mtx);
 
-        std::lock_guard<std::mutex> l2(_mtx);
-        assert(_notified != (size_t)-1);
-        return _notified;
+        //LOCK std::lock_guard<std::mutex> l2(_mtx);
+        assert(_notified.load() < _synchronizers.size());
+
+        for(size_t i(0); i<_notified; i++)
+        {
+            _synchronizers[i]->waiterDel(shared_from_this());
+        }
+        for(size_t i(_notified+1); i<_synchronizers.size(); i++)
+        {
+            _synchronizers[i]->waiterDel(shared_from_this());
+        }
+        _synchronizers.clear();
+
+
+        return _notified.load();
     }
 
     const CoroPtr &AnyWaiter::getCoro()
@@ -100,48 +136,46 @@ namespace async { namespace impl
 
     bool AnyWaiter::notify(Synchronizer *notifier)
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        //LOCK std::unique_lock<std::mutex> l(_mtx);
 
-        if(_notified != (size_t)-1)
+        for(;;)
         {
-            return false;
+            size_t was = markActive;
+            if(_notified.compare_exchange_weak(was, markPreNotified))
+            {
+                break;
+            }
+
+            switch(was)
+            {
+            case markActive:
+                //await more, spurious fail in _notified.compare_exchange_weak
+                break;
+            case markPreNotified:
+                return false;
+            case markDeactivating:
+                //await more, context deactivating in progress
+                std::this_thread::yield();
+                break;
+            default:
+                assert(was < 1024);
+                return false;
+            }
         }
 
         for(size_t i(0); i<_synchronizers.size(); i++)
         {
             if(notifier == _synchronizers[i].get())
             {
-                _notified = i;
-                assert(_coro);
-                Scheduler *scheduler = _coro->scheduler();
-                scheduler->coroReadyIfHolded(_coro.get());
-                break;
+                _notified.store(i);
             }
         }
+        assert(_notified.load() < _synchronizers.size());
 
-        assert(_notified != (size_t)-1 && "alien notifier?");
-        if(_notified == (size_t)-1)
-        {
-            return false;
-        }
 
-        size_t notified = _notified;
-        std::deque<SynchronizerPtr> synchronizers;
-        synchronizers.swap(_synchronizers);
-        l.unlock();
-
-        //TODO classic deadlock
-        // event1.set [e1] - waiter.notify[] - event2.delWaiter[e2]
-        // event2.set [e2] - waiter.notify[] - event1.delWaiter[e1]
-        for(size_t i(0); i<notified; i++)
-        {
-            synchronizers[i]->waiterDel(shared_from_this());
-        }
-        for(size_t i(notified+1); i<synchronizers.size(); i++)
-        {
-            synchronizers[i]->waiterDel(shared_from_this());
-        }
-        synchronizers.clear();
+        assert(_coro);
+        Scheduler *scheduler = _coro->scheduler();
+        scheduler->coroReadyIfHolded(_coro.get());
 
         return true;
     }

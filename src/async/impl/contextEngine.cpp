@@ -12,7 +12,8 @@ namespace async { namespace impl
 {
     __thread ContextEngine::Context ContextEngine::_rootContext = {};
     __thread ContextEngine::Context *ContextEngine::_currentContext = nullptr;
-    __thread std::mutex *ContextEngine::_mtxForUnlockAfterDeactivate = nullptr;
+    __thread std::atomic<size_t> *ContextEngine::_atomicForSetAfter = nullptr;
+    __thread size_t ContextEngine::_valueForSetAfter = 0;
 
     ContextEngine::ContextEngine()
 	{
@@ -108,26 +109,31 @@ namespace async { namespace impl
         	coro->scheduler()->markCoroComplete(coro);
         }
 
-        if(_mtxForUnlockAfterDeactivate)
+        if(_atomicForSetAfter)
         {
-        	_mtxForUnlockAfterDeactivate->unlock();
-        	_mtxForUnlockAfterDeactivate = nullptr;
+            _atomicForSetAfter->store(_valueForSetAfter);
+            _atomicForSetAfter = nullptr;
+            _valueForSetAfter = 0;
         }
 	}
 
-    void ContextEngine::contextDeactivate(Coro *coro, std::mutex *mtxForUnlockAfterDeactivate)
+    void ContextEngine::contextDeactivate(Coro *coro, std::atomic<size_t> *atomicForSetAfter, size_t valueForSetAfter)
     {
         assert(_currentContext);
         assert(_currentContext != &_rootContext);
         assert(_currentContext == &coro->_context);
 
-        assert(!_mtxForUnlockAfterDeactivate);
+        assert(!_atomicForSetAfter);
+        assert(!_valueForSetAfter);
 
-        _mtxForUnlockAfterDeactivate = mtxForUnlockAfterDeactivate;
+        _atomicForSetAfter = atomicForSetAfter;
+        _valueForSetAfter = valueForSetAfter;
+
         _currentContext = &_rootContext;
         swapcontext(&coro->_context, &_rootContext);
 
-        assert(!_mtxForUnlockAfterDeactivate);
+        assert(!_atomicForSetAfter);
+        assert(!_valueForSetAfter);
     }
 
     void ContextEngine::contextDestroy(Coro *coro)

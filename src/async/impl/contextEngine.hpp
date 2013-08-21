@@ -10,6 +10,7 @@
 #endif
 
 #include <mutex>
+#include <atomic>
 
 //#if defined(HAVE_VALGRIND)
 //#   define USE_VALGRIND
@@ -43,13 +44,14 @@ namespace async { namespace impl
     public://for task
         static void contextCreate(Coro *coro, size_t stackSize);
         static void contextActivate(Coro *coro);
-        static void contextDeactivate(Coro *coro, std::mutex *mtxForUnlockAfterDeactivate);
+        static void contextDeactivate(Coro *coro, std::atomic<size_t> *atomicForSetAfter, size_t valueForSetAfter);
         static void contextDestroy(Coro *coro);
 
     private:
         static __thread Context _rootContext;
         static __thread Context *_currentContext;
-        static __thread std::mutex *_mtxForUnlockAfterDeactivate;
+        static __thread std::atomic<size_t> *_atomicForSetAfter;
+        static __thread size_t _valueForSetAfter;
 
     private:
 #if PVOID_SIZE == INT_SIZE

@@ -61,7 +61,7 @@ namespace async { namespace impl
             assert(_code);
             std::function<void()>().swap(_code);
 
-            _scheduler->contextDeactivate(this, nullptr);
+            _scheduler->contextDeactivate(this, nullptr, 0);
         }
     }
 
