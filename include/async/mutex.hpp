@@ -1,30 +1,25 @@
 #ifndef _ASYNC_MUTEX_HPP_
 #define _ASYNC_MUTEX_HPP_
 
-#include <memory>
+#include "async/sizeofImpl.hpp"
+#include "async/hiddenImpl.hpp"
 
 namespace async
 {
-    namespace impl
-    {
-        class Mutex;
-        typedef std::shared_ptr<Mutex> MutexPtr;
-
-        class AnyWaiter;
-    }
+//    namespace impl
+//    {
+//        class Mutex;
+//        class AnyWaiter;
+//    }
 
     class Mutex
+            : private HiddenImpl<impl::Mutex>
     {
+        using Base = HiddenImpl<impl::Mutex>;
+
     public:
         Mutex(bool recursive);
-        Mutex(const Mutex &other);
-        Mutex(Mutex &&other);
         ~Mutex();
-
-        Mutex &operator=(const Mutex &other);
-        Mutex &operator=(Mutex &&other);
-
-        void swap(Mutex &other);
 
         //void lock();
         bool tryLock();
@@ -32,9 +27,8 @@ namespace async
         bool isLocked();
         void unlock();
 
-    private:
-        friend class impl::AnyWaiter;
-        impl::MutexPtr _implMutex;
+//    private:
+//        friend class impl::AnyWaiter;
     };
 }
 

@@ -55,12 +55,12 @@ endif()
 
 ############################################################
 if(NOT ASYNCSCHEDULER_CONTEXTENGINE_WINFIBER AND NOT ASYNCSCHEDULER_CONTEXTENGINE_UCONTEXT AND NOT ASYNCSCHEDULER_CONTEXTENGINE_BOOSTCONTEXT)
-    if(HAVE_BOOSTCONTEXT)
-        set(ASYNCSCHEDULER_CONTEXTENGINE_BOOSTCONTEXT ON)
-    elseif(HAVE_UCONTEXT)
+    if(HAVE_UCONTEXT)
         set(ASYNCSCHEDULER_CONTEXTENGINE_UCONTEXT ON)
     elseif(HAVE_WINFIBER)
         set(ASYNCSCHEDULER_CONTEXTENGINE_WINFIBER ON)
+    elseif(HAVE_BOOSTCONTEXT)
+        set(ASYNCSCHEDULER_CONTEXTENGINE_BOOSTCONTEXT ON)
     else()
         message(FATAL_ERROR "no support for context engine available")
     endif()
@@ -123,6 +123,7 @@ set(INC
     ${PINC}/event.hpp
     ${PINC}/mutex.hpp
     ${PINC}/wait.hpp
+    ${PINC}/hiddenImpl.hpp
 )
 source_group(include FILES ${INC})
 
@@ -163,8 +164,11 @@ set(SRC_IMPL
     ${PSRC}/impl/mutex.cpp
     ${PSRC}/impl/anyWaiter.cpp
     ${PSRC}/impl/synchronizer.cpp
+    ${PSRC}/impl/sizeofImplGen.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
+
+set_source_files_properties(${PSRC}/impl/sizeofImplGen.cpp PROPERTIES HEADER_FILE_ONLY ON)
 
 
 
@@ -172,6 +176,9 @@ source_group(src/impl FILES ${SRC_IMPL})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${PSRC})
 
+if(ASYNCSCHEDULER_CONTEXTENGINE_BOOSTCONTEXT)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
 
 
 
@@ -184,12 +191,55 @@ include_directories(${PSRC})
 
 
 ############################################################
-add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH} ${INC_IMPL} ${SRC_IMPL})
+string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UC)
+
+get_directory_property(INCS INCLUDE_DIRECTORIES)
+set(IINCS)
+foreach(i ${INCS})
+    list(APPEND IINCS "-I" ${i})
+endforeach(i)
+
+get_directory_property(DEFS COMPILE_DEFINITIONS)
+get_directory_property(DEFSB COMPILE_DEFINITIONS_${BUILD_TYPE_UC})
+set(IDEFS)
+foreach(i ${DEFS} ${DEFSB})
+    LIST(APPEND IDEFS "-D" ${i})
+endforeach(i)
+
+set(cxx_args ${IDEFS} ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${BUILD_TYPE_UC}} ${IINCS} ${PSRC}/impl/sizeofImplGen.cpp -o sizeofImplGen)
+separate_arguments(cxx_args)
+
+add_custom_command(OUTPUT ${PINC}/sizeofImpl.hpp
+                    COMMAND ${CMAKE_CXX_COMPILER} ${cxx_args}
+                    COMMAND ./sizeofImplGen > ${PINC}/sizeofImpl.hpp
+                    DEPENDS
+                        ${PSRC}/impl/sizeofImplGen.cpp
+                        ${PSRC}/impl/scheduler.hpp
+                        ${PSRC}/impl/event.hpp
+                        ${PSRC}/impl/mutex.hpp
+                        ${PSRC}/impl/anyWaiter.hpp
+                    VERBATIM)
+                    
+#set_source_files_properties(
+#    ${PINC}/scheduler.hpp
+#    ${PINC}/codeManager.hpp
+#    ${PINC}/event.hpp
+#    ${PINC}/mutex.hpp
+#    ${PINC}/wait.hpp
+#    PROPERTIES OBJECT_DEPENDS ${PINC}/sizeofImpl.hpp )
+
+
+
+
+############################################################
+add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH} ${INC_IMPL} ${SRC_IMPL} ${PINC}/sizeofImpl.hpp)
 
 if(ASYNCSCHEDULER_CONTEXTENGINE_BOOSTCONTEXT)
-    include_directories(${Boost_INCLUDE_DIRS})
     target_link_libraries(${PROJECT} ${Boost_CONTEXT_LIBRARY})
 endif()
+
+
+
 
 
 

@@ -6,17 +6,7 @@
 namespace async
 {
     Mutex::Mutex(bool recursive)
-        : _implMutex(new impl::Mutex(recursive))
-    {
-    }
-
-    Mutex::Mutex(const Mutex &other)
-        : _implMutex(other._implMutex)
-    {
-    }
-
-    Mutex::Mutex(Mutex &&other)
-        : _implMutex(std::move(other._implMutex))
+        : Base(recursive)
     {
     }
 
@@ -24,35 +14,18 @@ namespace async
     {
     }
 
-    Mutex &Mutex::operator=(const Mutex &other)
-    {
-        _implMutex = other._implMutex;
-        return *this;
-    }
-
-    Mutex &Mutex::operator=(Mutex &&other)
-    {
-        Mutex(std::move(other)).swap(*this);
-        return *this;
-    }
-
-    void Mutex::swap(Mutex &other)
-    {
-        _implMutex.swap(other._implMutex);
-    }
-
     bool Mutex::tryLock()
     {
-        return _implMutex->tryLock();
+        return Base::impl().tryLock();
     }
 
     bool Mutex::isLocked()
     {
-        return _implMutex->isLocked();
+        return Base::impl().isLocked();
     }
 
     void Mutex::unlock()
     {
-        return _implMutex->unlock();
+        return Base::impl().unlock();
     }
 }

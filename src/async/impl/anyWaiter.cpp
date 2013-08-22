@@ -50,7 +50,7 @@ namespace async { namespace impl
 
     void AnyWaiter::push(const ::async::Mutex &waitable)
     {
-        _synchronizersInitial.push_back(waitable._implMutex);
+        //TEMPORARY DISABLE _synchronizersInitial.push_back(waitable._implMutex);
     }
 
     size_t AnyWaiter::exec()
