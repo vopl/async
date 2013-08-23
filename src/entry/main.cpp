@@ -6,7 +6,7 @@
 #include "async/threadPool.hpp"
 #include "async/event.hpp"
 #include "async/mutex.hpp"
-#include "async/multiWaiter.hpp"
+#include "async/wait.hpp"
 #include "async/impl/coro.hpp"
 
 #include <iostream>
@@ -63,7 +63,7 @@ int main()
 //                    sprintf(tmp, "pre set        %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
 
-                    async::MultiWaiter(mutex).waitAny();
+                    async::waitAny(mutex);
 
 //                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
@@ -88,12 +88,12 @@ int main()
 //                    sprintf(tmp, "pre wait        %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
 
-                    async::MultiWaiter(mutex2).waitAny();
+                    async::waitAny(mutex2);
 
 //                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
 
-                    size_t i=async::MultiWaiter(event, event2).waitAny();
+                    uint32_t i = async::waitAny(event, event2);
 
 //                    sprintf(tmp, "after wait %p (%d)\n", async::impl::Coro::current(), (int)i);
 //                    std::cout<<tmp; std::cout.flush();

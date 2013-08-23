@@ -122,12 +122,18 @@ set(INC
     ${PINC}/codeManager.hpp
     ${PINC}/event.hpp
     ${PINC}/mutex.hpp
-    ${PINC}/multiWaiter.hpp
     ${PINC}/wait.hpp
     ${PINC}/hiddenImpl.hpp
 )
 source_group(include FILES ${INC})
 
+############################################################
+set(INC_DETAILS
+    ${PINC}/details/multiWaiter.hpp
+)
+source_group(include/details FILES ${INC_DETAILS})
+
+############################################################
 set(INC_IMPL
     ${PSRC}/impl/scheduler.hpp
     ${PSRC}/impl/thread.hpp
@@ -151,10 +157,16 @@ set(SRC
     ${PSRC}/codeManager.cpp
     ${PSRC}/event.cpp
     ${PSRC}/mutex.cpp
-    ${PSRC}/multiWaiter.cpp
 )
 source_group(src FILES ${SRC})
 
+############################################################
+set(SRC_DETAILS
+    ${PSRC}/details/multiWaiter.cpp
+)
+source_group(src/details FILES ${SRC_DETAILS})
+
+############################################################
 set(SRC_IMPL
     ${PSRC}/impl/scheduler.cpp
     ${PSRC}/impl/thread.cpp
@@ -234,7 +246,11 @@ add_custom_command(OUTPUT ${PINC}/sizeofImpl.hpp
 
 
 ############################################################
-add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH} ${INC_IMPL} ${SRC_IMPL} ${PINC}/sizeofImpl.hpp)
+add_library(${PROJECT} STATIC
+    ${INC} ${INC_IMPL} ${INC_DETAILS}
+    ${SRC} ${SRC_IMPL} ${SRC_DETAILS}
+    ${SRC_PCH}
+    ${PINC}/sizeofImpl.hpp)
 
 if(ASYNCSCHEDULER_CONTEXTENGINE_BOOSTCONTEXT)
     target_link_libraries(${PROJECT} ${Boost_CONTEXT_LIBRARY})

@@ -25,7 +25,7 @@ namespace async { namespace impl
     class MultiWaiter
     {
     public:
-        MultiWaiter(uint32_t synchronizersAmount);
+        MultiWaiter(Synchronizer **synchronizersBuffer);
         ~MultiWaiter();
 
         void push(Synchronizer *synchronizer);
@@ -47,9 +47,8 @@ namespace async { namespace impl
 //        std::deque<Synchronizer *> _synchronizers;
 //        std::deque<Synchronizer *> _synchronizersInitial;
 
-        Synchronizer *_inlineSynchronizersBuffer[8];
         Synchronizer **_synchronizersBuffer;
-        uint32_t _usedSynchronizersAmount;
+        uint32_t _synchronizersAmount;
 
         std::atomic<uint32_t> _notified;
         static const uint32_t markActive = (uint32_t)-1;

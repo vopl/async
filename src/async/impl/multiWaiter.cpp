@@ -11,12 +11,9 @@
 
 namespace async { namespace impl
 {
-    MultiWaiter::MultiWaiter(uint32_t synchronizersAmount)
-        : _synchronizersBuffer(
-              (synchronizersAmount <= sizeof(_inlineSynchronizersBuffer)/sizeof(Synchronizer *)) ?
-                  _inlineSynchronizersBuffer :
-                  new Synchronizer * [synchronizersAmount])
-        , _usedSynchronizersAmount(0)
+    MultiWaiter::MultiWaiter(Synchronizer **synchronizersBuffer)
+        : _synchronizersBuffer(synchronizersBuffer)
+        , _synchronizersAmount(0)
         , _notified(markActive)
     {
 
@@ -24,17 +21,12 @@ namespace async { namespace impl
 
     MultiWaiter::~MultiWaiter()
     {
-        if(_synchronizersBuffer != _inlineSynchronizersBuffer)
-        {
-            delete [] _synchronizersBuffer;
-        }
-
     }
 
 
     void MultiWaiter::push(Synchronizer *synchronizer)
     {
-        _synchronizersBuffer[_usedSynchronizersAmount++] = synchronizer;
+        _synchronizersBuffer[_synchronizersAmount++] = synchronizer;
     }
 
     uint32_t MultiWaiter::waitAny()
@@ -44,14 +36,14 @@ namespace async { namespace impl
         _coro = Coro::current()->shared_from_this();
         assert(_coro);
 
-        for(uint32_t i(0); i<_usedSynchronizersAmount; i++)
+        for(uint32_t i(0); i<_synchronizersAmount; i++)
         {
             if(!_synchronizersBuffer[i]->waiterAdd(this))
             {
                 uint32_t notified= _notified.load();
                 assert(_notified.load() <= i);
 
-                for(uint32_t j(0); j<i; j++)
+                for(uint32_t j(0); j<notified; j++)
                 {
                     _synchronizersBuffer[j]->waiterDel(this);
                 }
@@ -96,7 +88,7 @@ namespace async { namespace impl
 
 
         //LOCK std::lock_guard<std::mutex> l2(_mtx);
-        assert(_notified.load() < _usedSynchronizersAmount);
+        assert(_notified.load() < _synchronizersAmount);
 
 //        for(uint32_t i(0); i<_notified; i++)
 //        {
@@ -106,7 +98,7 @@ namespace async { namespace impl
 //        {
 //            _synchronizersBuffer[i]->waiterDel(this);
 //        }
-        for(uint32_t i(0); i<_usedSynchronizersAmount; i++)
+        for(uint32_t i(0); i<_synchronizersAmount; i++)
         {
             _synchronizersBuffer[i]->waiterDel(this);
         }
@@ -148,14 +140,14 @@ namespace async { namespace impl
             }
         }
 
-        for(uint32_t i(0); i<_usedSynchronizersAmount; i++)
+        for(uint32_t i(0); i<_synchronizersAmount; i++)
         {
             if(notifier == _synchronizersBuffer[i])
             {
                 _notified.store(i);
             }
         }
-        assert(_notified.load() < _usedSynchronizersAmount);
+        assert(_notified.load() < _synchronizersAmount);
 
 
         assert(_coro);
