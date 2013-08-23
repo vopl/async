@@ -1,5 +1,5 @@
 #include "async/impl/synchronizer.hpp"
-#include "async/impl/anyWaiter.hpp"
+#include "async/impl/multiWaiter.hpp"
 #include "async/impl/coro.hpp"
 #include "async/impl/scheduler.hpp"
 
@@ -15,26 +15,26 @@ namespace async { namespace impl
     Synchronizer::~Synchronizer()
     {
         //assert(_waiters.empty());
-        for(const AnyWaiterPtr &waiter : _waiters)
+        for(MultiWaiter *waiter : _waiters)
         {
             bool b = waiter->notify(this);
             assert(!b);
         }
     }
 
-    bool Synchronizer::waiterAdd(AnyWaiterPtr waiter)
+    bool Synchronizer::waiterAdd(MultiWaiter *waiter)
     {
         std::lock_guard<std::mutex> l(_mtx);
         waiterAddInternal(waiter);
         return true;
     }
 
-    void Synchronizer::waiterDel(AnyWaiterPtr waiter)
+    void Synchronizer::waiterDel(MultiWaiter *waiter)
     {
         std::lock_guard<std::mutex> l(_mtx);
 
-        std::deque<AnyWaiterPtr>::iterator iter = _waiters.begin();
-        std::deque<AnyWaiterPtr>::iterator end = _waiters.end();
+        std::deque<MultiWaiter *>::iterator iter = _waiters.begin();
+        std::deque<MultiWaiter *>::iterator end = _waiters.end();
         for(; iter!=end; iter++)
         {
             if(waiter == *iter)
@@ -46,7 +46,7 @@ namespace async { namespace impl
         //assert(!"already deleted?");
     }
 
-    void Synchronizer::waiterAddInternal(AnyWaiterPtr waiter)
+    void Synchronizer::waiterAddInternal(MultiWaiter *waiter)
     {
         assert(!_mtx.try_lock() && "must be already locked");
         _waiters.push_back(waiter);
@@ -63,11 +63,11 @@ namespace async { namespace impl
         assert(waitersAmount);
         assert(!_mtx.try_lock() && "must be already locked");
 
-        std::deque<AnyWaiterPtr> waiters(_waiters);
+        std::deque<MultiWaiter *> waiters(_waiters);
         _mtx.unlock();
 
         size_t result(0);
-        for(const AnyWaiterPtr &waiter : waiters)
+        for(MultiWaiter *waiter : waiters)
         {
             if(waiter->notify(this))
             {
@@ -86,7 +86,7 @@ namespace async { namespace impl
     {
         assert(!_mtx.try_lock() && "must be already locked");
 
-        for(const AnyWaiterPtr &waiter : _waiters)
+        for(MultiWaiter *waiter : _waiters)
         {
             if(waiter->notify(this))
             {

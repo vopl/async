@@ -6,58 +6,32 @@
 namespace async
 {
     Event::Event(bool autoReset)
-        : _implEvent(new impl::Event(autoReset))
     {
-    }
-
-    Event::Event(const Event &other)
-        : _implEvent(other._implEvent)
-    {
-    }
-
-    Event::Event(Event &&other)
-        : _implEvent(std::move(other._implEvent))
-    {
+        Base::ctor(autoReset);
     }
 
     Event::~Event()
     {
-    }
-
-    Event &Event::operator=(const Event &other)
-    {
-        _implEvent = other._implEvent;
-        return *this;
-    }
-
-    Event &Event::operator=(Event &&other)
-    {
-        Event(std::move(other)).swap(*this);
-        return *this;
-    }
-
-    void Event::swap(Event &other)
-    {
-        _implEvent.swap(other._implEvent);
+        Base::dtor();
     }
 
     size_t Event::set()
     {
-        return _implEvent->set();
+        return impl().set();
     }
 
     size_t Event::pulse()
     {
-        return _implEvent->pulse();
+        return impl().pulse();
     }
 
     bool Event::isSet()
     {
-        return _implEvent->isSet();
+        return impl().isSet();
     }
 
     bool Event::reset()
     {
-        return _implEvent->reset();
+        return impl().reset();
     }
 }

@@ -1,22 +1,37 @@
 #ifndef _ASYNC_HIDDENIMPL_HPP_
 #define _ASYNC_HIDDENIMPL_HPP_
 
-#include <memory>
 #include "async/sizeofImpl.hpp"
+#include <type_traits>
 
 namespace async
 {
     template <class T>
     class HiddenImpl
     {
+    private:
+        HiddenImpl(const HiddenImpl &other) = delete;
+        HiddenImpl &operator=(const HiddenImpl &other) = delete;
+
     protected:
-        template <typename... Arg>
-        HiddenImpl(const Arg &... args)
+        HiddenImpl()
         {
-            new (&_data) T(args...);
         }
 
         ~HiddenImpl()
+        {
+        }
+
+    public:
+
+        template <typename... Arg>
+        void ctor(const Arg &... args)
+        {
+            static_assert(sizeof(T)<=sizeof(_data), "inconsistent sizeofImpl");
+            new (&_data) T(args...);
+        }
+
+        void dtor()
         {
             (&impl())->~T();
         }
@@ -27,7 +42,7 @@ namespace async
         }
 
     private:
-        std::aligned_storage<sizeofImpl<T>::_value> _data;
+        typename std::aligned_storage<sizeofImpl<T>::_value>::type _data;
     };
 }
 

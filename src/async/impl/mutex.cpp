@@ -1,6 +1,6 @@
 #include "async/impl/mutex.hpp"
 #include "async/impl/coro.hpp"
-#include "async/impl/anyWaiter.hpp"
+#include "async/impl/multiWaiter.hpp"
 
 #include <cassert>
 
@@ -59,7 +59,7 @@ namespace async { namespace impl
         }
     }
 
-    bool Mutex::waiterAdd(AnyWaiterPtr waiter)
+    bool Mutex::waiterAdd(MultiWaiter *waiter)
     {
         std::lock_guard<std::mutex> l(_mtx);
         if(!_owner)

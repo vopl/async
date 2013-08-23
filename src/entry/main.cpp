@@ -6,7 +6,7 @@
 #include "async/threadPool.hpp"
 #include "async/event.hpp"
 #include "async/mutex.hpp"
-#include "async/wait.hpp"
+#include "async/multiWaiter.hpp"
 #include "async/impl/coro.hpp"
 
 #include <iostream>
@@ -43,10 +43,10 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 2);
+        async::ThreadPool tp(tu, 5);
 
         std::atomic<size_t> cnt(0);
-        size_t amount = 300;
+        size_t amount = 3000;
         async::Event event(true);
         async::Event event2(true);
         async::Mutex mutex(false);
@@ -60,11 +60,13 @@ int main()
 //                if(!(k&1))
                 if((k&1))
                 {
-                    sprintf(tmp, "pre set        %p\n", async::impl::Coro::current());
-                    std::cout<<tmp; std::cout.flush();
-                    async::waitAny(mutex);
-                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
-                    std::cout<<tmp; std::cout.flush();
+//                    sprintf(tmp, "pre set        %p\n", async::impl::Coro::current());
+//                    std::cout<<tmp; std::cout.flush();
+
+                    async::MultiWaiter(mutex).waitAny();
+
+//                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
+//                    std::cout<<tmp; std::cout.flush();
 
                     size_t i=rand() > RAND_MAX/2;
                     if(!i)
@@ -75,22 +77,27 @@ int main()
                     {
                         event2.set();
                     }
-                    sprintf(tmp, "after set  %p(%d)\n", async::impl::Coro::current(), (int)i);
-                    std::cout<<tmp; std::cout.flush();
+
+//                    sprintf(tmp, "after set  %p(%d)\n", async::impl::Coro::current(), (int)i);
+//                    std::cout<<tmp; std::cout.flush();
+
                     mutex.unlock();
                 }
                 else
                 {
-                    sprintf(tmp, "pre wait        %p\n", async::impl::Coro::current());
-                    std::cout<<tmp; std::cout.flush();
-                    async::waitAny(mutex2);
-                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
-                    std::cout<<tmp; std::cout.flush();
+//                    sprintf(tmp, "pre wait        %p\n", async::impl::Coro::current());
+//                    std::cout<<tmp; std::cout.flush();
 
-                    size_t i=async::waitAny(event, event2);
+                    async::MultiWaiter(mutex2).waitAny();
 
-                    sprintf(tmp, "after wait %p (%d)\n", async::impl::Coro::current(), (int)i);
-                    std::cout<<tmp; std::cout.flush();
+//                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
+//                    std::cout<<tmp; std::cout.flush();
+
+                    size_t i=async::MultiWaiter(event, event2).waitAny();
+
+//                    sprintf(tmp, "after wait %p (%d)\n", async::impl::Coro::current(), (int)i);
+//                    std::cout<<tmp; std::cout.flush();
+
                     mutex2.unlock();
                 }
 

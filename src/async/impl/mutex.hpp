@@ -9,8 +9,8 @@ namespace async { namespace impl
             : public Synchronizer
     {
     private:
-        Mutex(const Mutex &other);//not impl
-        Mutex &operator=(const Mutex &other);//not impl
+        Mutex(const Mutex &other) = delete;
+        Mutex &operator=(const Mutex &other) = delete;
 
     public:
         Mutex(bool recursive);
@@ -23,7 +23,7 @@ namespace async { namespace impl
         void unlock();
 
     private:
-        virtual bool waiterAdd(AnyWaiterPtr waiter);
+        virtual bool waiterAdd(MultiWaiter *waiter);
 
     private:
         bool _recursive;

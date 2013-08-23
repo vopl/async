@@ -23,7 +23,7 @@ namespace async { namespace impl
         bool reset();
 
     private:
-        virtual bool waiterAdd(AnyWaiterPtr waiter);
+        virtual bool waiterAdd(MultiWaiter *waiter);
 
     private:
         bool _autoReset;

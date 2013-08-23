@@ -6,16 +6,14 @@
 
 namespace async
 {
-//    namespace impl
-//    {
-//        class Mutex;
-//        class AnyWaiter;
-//    }
-
     class Mutex
-            : private HiddenImpl<impl::Mutex>
+            : public HiddenImpl<impl::Mutex>
     {
         using Base = HiddenImpl<impl::Mutex>;
+
+    private:
+        Mutex(const Mutex &other) = delete;
+        Mutex &operator=(const Mutex &other) = delete;
 
     public:
         Mutex(bool recursive);
@@ -26,9 +24,6 @@ namespace async
 
         bool isLocked();
         void unlock();
-
-//    private:
-//        friend class impl::AnyWaiter;
     };
 }
 

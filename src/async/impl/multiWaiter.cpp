@@ -1,4 +1,4 @@
-#include "async/impl/anyWaiter.hpp"
+#include "async/impl/multiWaiter.hpp"
 #include "async/event.hpp"
 #include "async/mutex.hpp"
 #include "async/impl/event.hpp"
@@ -7,71 +7,54 @@
 #include "async/impl/scheduler.hpp"
 
 #include <cassert>
+#include <iostream>
 
 namespace async { namespace impl
 {
-    AnyWaiterPtr waiterAlloc()
-    {
-        return AnyWaiterPtr(new AnyWaiter);
-    }
-
-    void waiterPush(AnyWaiterPtr waiter, const ::async::Event &waitable)
-    {
-        waiter->push(waitable);
-    }
-
-    void waiterPush(AnyWaiterPtr waiter, const ::async::Mutex &waitable)
-    {
-        waiter->push(waitable);
-    }
-
-    size_t waiterExec(AnyWaiterPtr waiter)
-    {
-        size_t result = waiter->exec();
-        return result;
-    }
-
-
-    AnyWaiter::AnyWaiter()
-        : _notified(markActive)
+    MultiWaiter::MultiWaiter(uint32_t synchronizersAmount)
+        : _synchronizersBuffer(
+              (synchronizersAmount <= sizeof(_inlineSynchronizersBuffer)/sizeof(Synchronizer *)) ?
+                  _inlineSynchronizersBuffer :
+                  new Synchronizer * [synchronizersAmount])
+        , _usedSynchronizersAmount(0)
+        , _notified(markActive)
     {
 
     }
 
-    AnyWaiter::~AnyWaiter()
+    MultiWaiter::~MultiWaiter()
     {
+        if(_synchronizersBuffer != _inlineSynchronizersBuffer)
+        {
+            delete [] _synchronizersBuffer;
+        }
 
     }
 
-    void AnyWaiter::push(const ::async::Event &waitable)
+
+    void MultiWaiter::push(Synchronizer *synchronizer)
     {
-        _synchronizersInitial.push_back(waitable._implEvent);
+        _synchronizersBuffer[_usedSynchronizersAmount++] = synchronizer;
     }
 
-    void AnyWaiter::push(const ::async::Mutex &waitable)
-    {
-        //TEMPORARY DISABLE _synchronizersInitial.push_back(waitable._implMutex);
-    }
-
-    size_t AnyWaiter::exec()
+    uint32_t MultiWaiter::waitAny()
     {
         //LOCK std::unique_lock<std::mutex> l(_mtx);
 
         _coro = Coro::current()->shared_from_this();
         assert(_coro);
 
-        for(size_t i(0); i<_synchronizersInitial.size(); i++)
+        for(uint32_t i(0); i<_usedSynchronizersAmount; i++)
         {
-            _synchronizers.push_back(_synchronizersInitial[i]);
-            if(!_synchronizers[i]->waiterAdd(shared_from_this()))
+            if(!_synchronizersBuffer[i]->waiterAdd(this))
             {
-                assert(_notified.load() == i);
+                uint32_t notified= _notified.load();
+                assert(_notified.load() <= i);
 
-                for(size_t j(0); j<i; j++)
+                for(uint32_t j(0); j<i; j++)
                 {
-                    _synchronizers[j]->waiterDel(shared_from_this());
+                    _synchronizersBuffer[j]->waiterDel(this);
                 }
-                _synchronizers.clear();
 
                 return i;
             }
@@ -82,7 +65,7 @@ namespace async { namespace impl
         bool doLoop = true;
         while(doLoop)
         {
-            size_t was = markActive;
+            uint32_t was = markActive;
             if(_notified.compare_exchange_weak(was, markDeactivating))
             {
                 Scheduler *scheduler = _coro->scheduler();
@@ -113,34 +96,36 @@ namespace async { namespace impl
 
 
         //LOCK std::lock_guard<std::mutex> l2(_mtx);
-        assert(_notified.load() < _synchronizers.size());
+        assert(_notified.load() < _usedSynchronizersAmount);
 
-        for(size_t i(0); i<_notified; i++)
+//        for(uint32_t i(0); i<_notified; i++)
+//        {
+//            _synchronizersBuffer[i]->waiterDel(this);
+//        }
+//        for(uint32_t i(_notified+1); i<_usedSynchronizersAmount; i++)
+//        {
+//            _synchronizersBuffer[i]->waiterDel(this);
+//        }
+        for(uint32_t i(0); i<_usedSynchronizersAmount; i++)
         {
-            _synchronizers[i]->waiterDel(shared_from_this());
+            _synchronizersBuffer[i]->waiterDel(this);
         }
-        for(size_t i(_notified+1); i<_synchronizers.size(); i++)
-        {
-            _synchronizers[i]->waiterDel(shared_from_this());
-        }
-        _synchronizers.clear();
-
 
         return _notified.load();
     }
 
-    const CoroPtr &AnyWaiter::getCoro()
+    const CoroPtr &MultiWaiter::getCoro()
     {
         return _coro;
     }
 
-    bool AnyWaiter::notify(Synchronizer *notifier)
+    bool MultiWaiter::notify(Synchronizer *notifier)
     {
         //LOCK std::unique_lock<std::mutex> l(_mtx);
 
         for(;;)
         {
-            size_t was = markActive;
+            uint32_t was = markActive;
             if(_notified.compare_exchange_weak(was, markPreNotified))
             {
                 break;
@@ -163,14 +148,14 @@ namespace async { namespace impl
             }
         }
 
-        for(size_t i(0); i<_synchronizers.size(); i++)
+        for(uint32_t i(0); i<_usedSynchronizersAmount; i++)
         {
-            if(notifier == _synchronizers[i].get())
+            if(notifier == _synchronizersBuffer[i])
             {
                 _notified.store(i);
             }
         }
-        assert(_notified.load() < _synchronizers.size());
+        assert(_notified.load() < _usedSynchronizersAmount);
 
 
         assert(_coro);

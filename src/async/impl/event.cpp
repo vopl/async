@@ -1,5 +1,5 @@
 #include "async/impl/event.hpp"
-#include "async/impl/anyWaiter.hpp"
+#include "async/impl/multiWaiter.hpp"
 
 #include <cassert>
 
@@ -84,7 +84,7 @@ namespace async { namespace impl
         return previous;
     }
 
-    bool Event::waiterAdd(AnyWaiterPtr waiter)
+    bool Event::waiterAdd(MultiWaiter *waiter)
     {
         std::unique_lock<std::mutex> l(_mtx);
 

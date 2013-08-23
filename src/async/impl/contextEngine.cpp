@@ -12,8 +12,8 @@ namespace async { namespace impl
 {
     __thread ContextEngine::Context ContextEngine::_rootContext = {};
     __thread ContextEngine::Context *ContextEngine::_currentContext = nullptr;
-    __thread std::atomic<size_t> *ContextEngine::_atomicForSetAfter = nullptr;
-    __thread size_t ContextEngine::_valueForSetAfter = 0;
+    __thread std::atomic<uint32_t> *ContextEngine::_atomicForSetAfter = nullptr;
+    __thread uint32_t ContextEngine::_valueForSetAfter = 0;
 
     ContextEngine::ContextEngine()
 	{
@@ -117,7 +117,7 @@ namespace async { namespace impl
         }
 	}
 
-    void ContextEngine::contextDeactivate(Coro *coro, std::atomic<size_t> *atomicForSetAfter, size_t valueForSetAfter)
+    void ContextEngine::contextDeactivate(Coro *coro, std::atomic<uint32_t> *atomicForSetAfter, uint32_t valueForSetAfter)
     {
         assert(_currentContext);
         assert(_currentContext != &_rootContext);

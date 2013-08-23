@@ -122,6 +122,7 @@ set(INC
     ${PINC}/codeManager.hpp
     ${PINC}/event.hpp
     ${PINC}/mutex.hpp
+    ${PINC}/multiWaiter.hpp
     ${PINC}/wait.hpp
     ${PINC}/hiddenImpl.hpp
 )
@@ -136,7 +137,7 @@ set(INC_IMPL
     ${PSRC}/impl/contextEngine.hpp
     ${PSRC}/impl/event.hpp
     ${PSRC}/impl/mutex.hpp
-    ${PSRC}/impl/anyWaiter.hpp
+    ${PSRC}/impl/multiWaiter.hpp
     ${PSRC}/impl/synchronizer.hpp
 )
 source_group(include/impl FILES ${INC_IMPL})
@@ -150,6 +151,7 @@ set(SRC
     ${PSRC}/codeManager.cpp
     ${PSRC}/event.cpp
     ${PSRC}/mutex.cpp
+    ${PSRC}/multiWaiter.cpp
 )
 source_group(src FILES ${SRC})
 
@@ -162,7 +164,7 @@ set(SRC_IMPL
     ${PSRC}/impl/contextEngine.cpp
     ${PSRC}/impl/event.cpp
     ${PSRC}/impl/mutex.cpp
-    ${PSRC}/impl/anyWaiter.cpp
+    ${PSRC}/impl/multiWaiter.cpp
     ${PSRC}/impl/synchronizer.cpp
     ${PSRC}/impl/sizeofImplGen.cpp
 )
@@ -217,7 +219,7 @@ add_custom_command(OUTPUT ${PINC}/sizeofImpl.hpp
                         ${PSRC}/impl/scheduler.hpp
                         ${PSRC}/impl/event.hpp
                         ${PSRC}/impl/mutex.hpp
-                        ${PSRC}/impl/anyWaiter.hpp
+                        ${PSRC}/impl/multiWaiter.hpp
                     VERBATIM)
                     
 #set_source_files_properties(

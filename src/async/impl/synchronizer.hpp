@@ -10,8 +10,7 @@ namespace async { namespace impl
     class Coro;
     typedef std::shared_ptr<Coro> CoroPtr;
 
-    class AnyWaiter;
-    typedef std::shared_ptr<AnyWaiter> AnyWaiterPtr;
+    class MultiWaiter;
 
     ////////////////////////////////////////////////////////////////////////////////
     class Synchronizer
@@ -25,13 +24,13 @@ namespace async { namespace impl
 
     private:
         //from SynchronizerWaiter
-        friend class ::async::impl::AnyWaiter;
-        virtual bool waiterAdd(AnyWaiterPtr waiter);
-        void waiterDel(AnyWaiterPtr waiter);
+        friend class ::async::impl::MultiWaiter;
+        virtual bool waiterAdd(MultiWaiter *waiter);
+        void waiterDel(MultiWaiter *waiter);
 
     protected:
         //from waiterAdd
-        void waiterAddInternal(AnyWaiterPtr waiter);
+        void waiterAddInternal(MultiWaiter *waiter);
 
     protected:
         size_t waitersAmount();
@@ -40,9 +39,8 @@ namespace async { namespace impl
         CoroPtr notifyOneAndGetCoro();
 
     private:
-        std::deque<AnyWaiterPtr> _waiters;
+        std::deque<MultiWaiter *> _waiters;
     };
-    typedef std::shared_ptr<Synchronizer> SynchronizerPtr;
 }}
 
 #endif

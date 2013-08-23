@@ -6,12 +6,13 @@
 namespace async
 {
     Mutex::Mutex(bool recursive)
-        : Base(recursive)
     {
+        Base::ctor(recursive);
     }
 
     Mutex::~Mutex()
     {
+        Base::dtor();
     }
 
     bool Mutex::tryLock()
