@@ -6,8 +6,13 @@
 
 namespace async
 {
+    namespace details
+    {
+        class MultiWaiter;
+    }
+
     class Mutex
-            : public HiddenImpl<impl::Mutex>
+            : private HiddenImpl<impl::Mutex>
     {
         using Base = HiddenImpl<impl::Mutex>;
 
@@ -24,6 +29,9 @@ namespace async
 
         bool isLocked();
         void unlock();
+
+    private:
+        friend class details::MultiWaiter;
     };
 }
 

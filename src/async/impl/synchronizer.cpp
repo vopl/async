@@ -17,7 +17,7 @@ namespace async { namespace impl
         //assert(_waiters.empty());
         for(MultiWaiter *waiter : _waiters)
         {
-            bool b = waiter->notify(this);
+            bool b = waiter->notify(this, false);
             assert(!b);
         }
     }
@@ -69,7 +69,7 @@ namespace async { namespace impl
         size_t result(0);
         for(MultiWaiter *waiter : waiters)
         {
-            if(waiter->notify(this))
+            if(waiter->notify(this, false))
             {
                 result++;
                 if(!--waitersAmount)
@@ -82,19 +82,19 @@ namespace async { namespace impl
         return result;
     }
 
-    CoroPtr Synchronizer::notifyOneAndGetCoro()
+    Coro *Synchronizer::notifyOneAndGetCoro()
     {
         assert(!_mtx.try_lock() && "must be already locked");
 
         for(MultiWaiter *waiter : _waiters)
         {
-            if(waiter->notify(this))
+            if(waiter->notify(this, false))
             {
                 return waiter->getCoro();
             }
         }
 
-        return CoroPtr();
+        return nullptr;
     }
 
 }}

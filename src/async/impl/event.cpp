@@ -92,7 +92,7 @@ namespace async { namespace impl
         {
             assert(!waitersAmount());
 
-            if(waiter->notify(this))
+            if(waiter->notify(this, true))
             {
                 if(_autoReset)
                 {

@@ -6,13 +6,12 @@
 namespace async
 {
     Event::Event(bool autoReset)
+        : Base(autoReset)
     {
-        Base::ctor(autoReset);
     }
 
     Event::~Event()
     {
-        Base::dtor();
     }
 
     size_t Event::set()

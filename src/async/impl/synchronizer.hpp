@@ -36,7 +36,7 @@ namespace async { namespace impl
         size_t waitersAmount();
 
         size_t notify(size_t waitersAmount=1);
-        CoroPtr notifyOneAndGetCoro();
+        Coro *notifyOneAndGetCoro();
 
     private:
         std::deque<MultiWaiter *> _waiters;

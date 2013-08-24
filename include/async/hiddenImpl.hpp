@@ -14,24 +14,15 @@ namespace async
         HiddenImpl &operator=(const HiddenImpl &other) = delete;
 
     protected:
-        HiddenImpl()
-        {
-        }
-
-        ~HiddenImpl()
-        {
-        }
-
-    public:
 
         template <typename... Arg>
-        void ctor(const Arg &... args)
+        HiddenImpl(const Arg &... args)
         {
             static_assert(sizeof(T)<=sizeof(_data), "inconsistent sizeofImpl");
             new (&_data) T(args...);
         }
 
-        void dtor()
+        ~HiddenImpl()
         {
             (&impl())->~T();
         }

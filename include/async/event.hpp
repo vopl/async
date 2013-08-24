@@ -6,8 +6,13 @@
 
 namespace async
 {
+    namespace details
+    {
+        class MultiWaiter;
+    }
+
     class Event
-            : public HiddenImpl<impl::Event>
+            : private HiddenImpl<impl::Event>
     {
         using Base = HiddenImpl<impl::Event>;
 
@@ -25,6 +30,9 @@ namespace async
 
         bool isSet();
         bool reset();
+
+    private:
+        friend class details::MultiWaiter;
     };
 }
 

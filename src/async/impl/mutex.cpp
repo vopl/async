@@ -26,7 +26,7 @@ namespace async { namespace impl
             return false;
         }
 
-        _owner = Coro::current()->shared_from_this();
+        _owner = Coro::current();
         _ownerDepth++;
         return false;
 
@@ -43,12 +43,12 @@ namespace async { namespace impl
         std::unique_lock<std::mutex> l(_mtx);
         assert(_owner);
         assert(_ownerDepth);
-        assert(_owner.get() == Coro::current());
+        assert(_owner == Coro::current());
 
         _ownerDepth--;
         if(!_ownerDepth)
         {
-            _owner.reset();
+            _owner = nullptr;
 
             //wakeup next if exists
             _owner = notifyOneAndGetCoro();
@@ -64,7 +64,7 @@ namespace async { namespace impl
         std::lock_guard<std::mutex> l(_mtx);
         if(!_owner)
         {
-            if(waiter->notify(this))
+            if(waiter->notify(this, true))
             {
                 _owner = waiter->getCoro();
                 _ownerDepth++;
@@ -76,7 +76,7 @@ namespace async { namespace impl
         {
             if(_owner == waiter->getCoro())
             {
-                if(waiter->notify(this))
+                if(waiter->notify(this, true))
                 {
                     _ownerDepth++;
                 }

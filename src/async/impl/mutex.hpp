@@ -27,7 +27,7 @@ namespace async { namespace impl
 
     private:
         bool _recursive;
-        CoroPtr _owner;
+        Coro    *_owner;
         size_t _ownerDepth;
     };
 }}

@@ -14,7 +14,8 @@ namespace async { namespace impl
     MultiWaiter::MultiWaiter(Synchronizer **synchronizersBuffer)
         : _synchronizersBuffer(synchronizersBuffer)
         , _synchronizersAmount(0)
-        , _notified(markActive)
+        , _state(markActive)
+        , _coro()
     {
 
     }
@@ -33,53 +34,57 @@ namespace async { namespace impl
     {
         //LOCK std::unique_lock<std::mutex> l(_mtx);
 
-        _coro = Coro::current()->shared_from_this();
+        _coro = Coro::current();
         assert(_coro);
 
-        for(uint32_t i(0); i<_synchronizersAmount; i++)
+        for(uint32_t idxAdd(0); idxAdd<_synchronizersAmount; idxAdd++)
         {
-            if(!_synchronizersBuffer[i]->waiterAdd(this))
+            if(!_synchronizersBuffer[idxAdd]->waiterAdd(this))
             {
-                uint32_t notified= _notified.load();
-                assert(_notified.load() <= i);
+                uint32_t notified= _state.load();
+                assert(_state.load() <= idxAdd);
 
-                for(uint32_t j(0); j<notified; j++)
+                for(uint32_t idxDel(0); idxDel<idxAdd; idxDel++)
                 {
-                    _synchronizersBuffer[j]->waiterDel(this);
+                    _synchronizersBuffer[idxDel]->waiterDel(this);
                 }
 
-                return i;
+                return notified;
             }
         }
 
         //LOCK l.release();
 
+        uint32_t wasState;
         bool doLoop = true;
         while(doLoop)
         {
-            uint32_t was = markActive;
-            if(_notified.compare_exchange_weak(was, markDeactivating))
+            wasState = markActive;
+            if(_state.compare_exchange_weak(wasState, markDeactivating))
             {
                 Scheduler *scheduler = _coro->scheduler();
-                scheduler->contextDeactivate(_coro.get(), &_notified, markActive);
+                scheduler->contextDeactivate(_coro, &_state, markInactive);
                 break;
             }
 
-            switch(was)
+            switch(wasState)
             {
             case markActive:
-                //await more
+                //spurious failure, try one more
                 break;
             case markPreNotified:
-                //await more
+                //some Syncronizer fired but not complete interactions, await
                 std::this_thread::yield();
                 break;
             case markDeactivating:
+            case markInactive:
                 //impossible
+                assert(!"impossible");
                 abort();
                 break;
             default:
-                assert(was < 1024);
+                //some Syncronizer fired completely
+                assert(wasState < 1024);//1024 - maximum Syncronizers in progress for this waiter instance
                 doLoop = false;
                 break;
             }
@@ -88,55 +93,92 @@ namespace async { namespace impl
 
 
         //LOCK std::lock_guard<std::mutex> l2(_mtx);
-        assert(_notified.load() < _synchronizersAmount);
+        assert(_state.load() < _synchronizersAmount);
 
-//        for(uint32_t i(0); i<_notified; i++)
-//        {
-//            _synchronizersBuffer[i]->waiterDel(this);
-//        }
-//        for(uint32_t i(_notified+1); i<_usedSynchronizersAmount; i++)
-//        {
-//            _synchronizersBuffer[i]->waiterDel(this);
-//        }
+
         for(uint32_t i(0); i<_synchronizersAmount; i++)
         {
             _synchronizersBuffer[i]->waiterDel(this);
         }
 
-        return _notified.load();
+        return _state.load();
     }
 
-    const CoroPtr &MultiWaiter::getCoro()
+    Coro *MultiWaiter::getCoro()
     {
         return _coro;
     }
 
-    bool MultiWaiter::notify(Synchronizer *notifier)
+    bool MultiWaiter::notify(Synchronizer *notifier, bool guaranteeNonInactive)
     {
-        //LOCK std::unique_lock<std::mutex> l(_mtx);
-
-        for(;;)
+        bool coroActive;
+        if(guaranteeNonInactive)
         {
-            uint32_t was = markActive;
-            if(_notified.compare_exchange_weak(was, markPreNotified))
+            for(;;)
             {
-                break;
-            }
+                uint32_t wasState = markActive;
+                if(_state.compare_exchange_weak(wasState, markPreNotified))
+                {
+                    coroActive = markActive == wasState;
+                    break;
+                }
 
-            switch(was)
+                switch(wasState)
+                {
+                case markActive:
+                    //await more, spurious fail in _notified.compare_exchange_weak
+                    break;
+                case markPreNotified:
+                    return false;
+                case markDeactivating:
+                    //context deactivating in progress, impossible
+                    //impossible
+                    assert(!"impossible");
+                    abort();
+                    break;
+                case markInactive:
+                    //context deactivated, impossible
+                    assert(!"impossible");
+                    abort();
+                    break;
+                default:
+                    assert(wasState < 1024);
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            uint32_t wasState = markActive;
+            for(;;)
             {
-            case markActive:
-                //await more, spurious fail in _notified.compare_exchange_weak
-                break;
-            case markPreNotified:
-                return false;
-            case markDeactivating:
-                //await more, context deactivating in progress
-                std::this_thread::yield();
-                break;
-            default:
-                assert(was < 1024);
-                return false;
+                if(_state.compare_exchange_weak(wasState, markPreNotified))
+                {
+                    coroActive = markActive == wasState;
+                    break;
+                }
+
+                switch(wasState)
+                {
+                case markActive:
+                    //await more, spurious fail in _notified.compare_exchange_weak
+                    wasState = markActive;
+                    break;
+                case markPreNotified:
+                    return false;
+                case markDeactivating:
+                    //context deactivating in progress, await inactive state
+                    wasState = markInactive;
+                    std::this_thread::yield();
+                    break;
+                case markInactive:
+                    //context deactivated, try from inactive state
+                    wasState = markInactive;
+                    break;
+                default:
+                    assert(wasState < 1024);
+                    return false;
+                }
             }
         }
 
@@ -144,15 +186,18 @@ namespace async { namespace impl
         {
             if(notifier == _synchronizersBuffer[i])
             {
-                _notified.store(i);
+                _state.store(i);
             }
         }
-        assert(_notified.load() < _synchronizersAmount);
+        assert(_state.load() < _synchronizersAmount);
 
 
         assert(_coro);
-        Scheduler *scheduler = _coro->scheduler();
-        scheduler->coroReadyIfHolded(_coro.get());
+        if(!coroActive)
+        {
+            Scheduler *scheduler = _coro->scheduler();
+            scheduler->coroReadyIfHolded(_coro);
+        }
 
         return true;
     }
