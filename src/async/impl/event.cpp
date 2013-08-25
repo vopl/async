@@ -77,10 +77,13 @@ namespace async { namespace impl
     bool Event::reset()
     {
         std::lock_guard<std::mutex> l(_mtx);
-        assert(!waitersAmount());
 
         bool previous = _state;
-        _state = false;
+        if(previous)
+        {
+            assert(!waitersAmount());
+            _state = false;
+        }
         return previous;
     }
 

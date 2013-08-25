@@ -17,19 +17,45 @@ namespace async { namespace impl
     {
     }
 
+    void Mutex::lock()
+    {
+        if(tryLock())
+        {
+            return;
+        }
+
+        Synchronizer *synchronizersBuffer[1];
+        MultiWaiter multiWaiter(synchronizersBuffer);
+        multiWaiter.push(this);
+
+        uint32_t waiterResult = multiWaiter.waitAny();
+
+        (void)waiterResult;
+        assert(0 == waiterResult);
+
+        return;
+    }
+
     bool Mutex::tryLock()
     {
         std::lock_guard<std::mutex> l(_mtx);
-
-        if(_ownerDepth)
+        if(!_owner)
         {
-            return false;
+            _owner = Coro::current();
+            _ownerDepth++;
+            return true;
         }
 
-        _owner = Coro::current();
-        _ownerDepth++;
-        return false;
+        if(_recursive)
+        {
+            if(_owner == Coro::current())
+            {
+                _ownerDepth++;
+                return true;
+            }
+        }
 
+        return false;
     }
 
     bool Mutex::isLocked()
