@@ -43,14 +43,14 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 5);
+        async::ThreadPool tp(tu, 1);
 
         std::atomic<size_t> cnt(0);
         size_t amount = 3000000;
         async::Event event(true);
         async::Event event2(true);
-        async::Mutex mutex(false);
-        async::Mutex mutex2(false);
+        async::Mutex mutex;
+        async::Mutex mutex2;
 
         for(size_t k(0); k<amount; k++)
         {
@@ -95,7 +95,8 @@ int main()
 //                    sprintf(tmp, "pre wait        %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();
 
-                    async::waitAny(mutex2);
+                    //async::waitAny(mutex2);
+                    mutex2.lock();
 
 //                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
 //                    std::cout<<tmp; std::cout.flush();

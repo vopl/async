@@ -5,13 +5,18 @@
 
 namespace async
 {
-    Mutex::Mutex(bool recursive)
-        : Base(recursive)
+    Mutex::Mutex()
+        : Base()
     {
     }
 
     Mutex::~Mutex()
     {
+    }
+
+    void Mutex::lock()
+    {
+        return Base::impl().lock();
     }
 
     bool Mutex::tryLock()

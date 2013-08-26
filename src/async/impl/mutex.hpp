@@ -13,7 +13,7 @@ namespace async { namespace impl
         Mutex &operator=(const Mutex &other) = delete;
 
     public:
-        Mutex(bool recursive);
+        Mutex();
         virtual ~Mutex();
 
         void lock();
@@ -26,9 +26,7 @@ namespace async { namespace impl
         virtual bool waiterAdd(MultiWaiter *waiter);
 
     private:
-        bool _recursive;
         Coro    *_owner;
-        size_t _ownerDepth;
 
 //Syncronizer
 //        std::mutex _mtx;

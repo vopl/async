@@ -21,10 +21,10 @@ namespace async
         Mutex &operator=(const Mutex &other) = delete;
 
     public:
-        Mutex(bool recursive);
+        Mutex();
         ~Mutex();
 
-        //void lock();
+        void lock();
         bool tryLock();
 
         bool isLocked();
