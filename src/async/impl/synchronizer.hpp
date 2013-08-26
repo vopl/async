@@ -34,7 +34,8 @@ namespace async { namespace impl
     protected:
         size_t waitersAmount();
 
-        size_t notify(size_t waitersAmount=1);
+        bool notifyOne();
+        uint32_t notifyAll();
         Coro *notifyOneAndGetCoro();
 
     private:

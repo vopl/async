@@ -28,6 +28,11 @@ namespace async { namespace impl
     private:
         bool _autoReset;
         bool _state;
+
+//Syncronizer
+//        std::mutex _mtx;
+//        std::deque<MultiWaiter *> _waiters;
+
     };
 }}
 

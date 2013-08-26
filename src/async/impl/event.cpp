@@ -34,12 +34,12 @@ namespace async { namespace impl
         if(_autoReset)
         {
             l.release();
-            return notify(1);
+            return notifyOne()?1:0;
         }
 
         _state = true;
         l.release();
-        return notify(-1);
+        return notifyAll();
     }
 
     size_t Event::pulse()
@@ -61,11 +61,11 @@ namespace async { namespace impl
         if(_autoReset)
         {
             l.release();
-            return notify(-1);
+            return notifyAll();
         }
 
         l.release();
-        return notify(-1);
+        return notifyAll();
     }
 
     bool Event::isSet()

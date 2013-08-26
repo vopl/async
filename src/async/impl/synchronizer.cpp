@@ -58,9 +58,28 @@ namespace async { namespace impl
         return _waiters.size();
     }
 
-    size_t Synchronizer::notify(size_t waitersAmount)
+    bool Synchronizer::notifyOne()
     {
-        assert(waitersAmount);
+        assert(waitersAmount());
+        assert(!_mtx.try_lock() && "must be already locked");
+
+        std::deque<MultiWaiter *> waiters(_waiters);
+        _mtx.unlock();
+
+        for(MultiWaiter *waiter : waiters)
+        {
+            if(waiter->notify(this, false))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    uint32_t Synchronizer::notifyAll()
+    {
+        assert(waitersAmount());
         assert(!_mtx.try_lock() && "must be already locked");
 
         std::deque<MultiWaiter *> waiters(_waiters);
@@ -72,10 +91,6 @@ namespace async { namespace impl
             if(waiter->notify(this, false))
             {
                 result++;
-                if(!--waitersAmount)
-                {
-                    return result;
-                }
             }
         }
 
@@ -89,7 +104,7 @@ namespace async { namespace impl
         for(MultiWaiter *waiter : _waiters)
         {
             if(waiter->notify(this, false))
-            {
+            {//TODO после нотификации ожидатор в неопределеном состоянии
                 return waiter->getCoro();
             }
         }

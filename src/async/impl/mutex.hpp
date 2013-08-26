@@ -29,6 +29,11 @@ namespace async { namespace impl
         bool _recursive;
         Coro    *_owner;
         size_t _ownerDepth;
+
+//Syncronizer
+//        std::mutex _mtx;
+//        std::deque<MultiWaiter *> _waiters;
+
     };
 }}
 
