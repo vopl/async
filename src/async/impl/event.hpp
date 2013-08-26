@@ -2,6 +2,7 @@
 #define _ASYNC_IMPL_EVENT_HPP_
 
 #include "async/impl/synchronizer.hpp"
+#include <cassert>
 
 namespace async { namespace impl
 {
@@ -23,7 +24,12 @@ namespace async { namespace impl
         bool reset();
 
     private:
-        virtual bool waiterAdd(MultiWaiter *waiter);
+        virtual bool waiterAdd(MultiWaiter *waiter) override;
+        virtual void waiterDel(MultiWaiter *waiter) override {assert(0);}
+        size_t waitersAmount() {assert(0);return 0;}
+        bool notifyOne() {assert(0); return false;}
+        size_t notifyAll() {assert(0); return 0;}
+        void waiterAddInternal(...) {assert(0);}
 
     private:
         bool _autoReset;

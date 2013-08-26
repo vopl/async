@@ -17,7 +17,7 @@ namespace async { namespace impl
 
     size_t Event::set()
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        //HERE std::unique_lock<std::mutex> l(_mtx);
 
         if(_state)
         {
@@ -33,18 +33,18 @@ namespace async { namespace impl
 
         if(_autoReset)
         {
-            l.release();
+            //HERE l.release();
             return notifyOne()?1:0;
         }
 
         _state = true;
-        l.release();
+        //HERE l.release();
         return notifyAll();
     }
 
     size_t Event::pulse()
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        //HERE std::unique_lock<std::mutex> l(_mtx);
 
         if(_state)
         {
@@ -60,23 +60,23 @@ namespace async { namespace impl
 
         if(_autoReset)
         {
-            l.release();
+            //HERE l.release();
             return notifyAll();
         }
 
-        l.release();
+        //HERE l.release();
         return notifyAll();
     }
 
     bool Event::isSet()
     {
-        std::lock_guard<std::mutex> l(_mtx);
+        //HERE std::lock_guard<std::mutex> l(_mtx);
         return _state;
     }
 
     bool Event::reset()
     {
-        std::lock_guard<std::mutex> l(_mtx);
+        //HERE std::lock_guard<std::mutex> l(_mtx);
 
         bool previous = _state;
         if(previous)
@@ -89,7 +89,7 @@ namespace async { namespace impl
 
     bool Event::waiterAdd(MultiWaiter *waiter)
     {
-        std::unique_lock<std::mutex> l(_mtx);
+        //HERE std::unique_lock<std::mutex> l(_mtx);
 
         if(_state)
         {

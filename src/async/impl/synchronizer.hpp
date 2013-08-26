@@ -14,32 +14,9 @@ namespace async { namespace impl
     ////////////////////////////////////////////////////////////////////////////////
     class Synchronizer
     {
-    protected:
-        Synchronizer();
-        virtual ~Synchronizer();
-
-    protected:
-        std::mutex _mtx;
-
-    private:
-        //from SynchronizerWaiter
-        friend class ::async::impl::MultiWaiter;
-        virtual bool waiterAdd(MultiWaiter *waiter);
-        void waiterDel(MultiWaiter *waiter);
-
-    protected:
-        //from waiterAdd
-        void waiterAddInternal(MultiWaiter *waiter);
-
-    protected:
-        size_t waitersAmount();
-
-        bool notifyOne();
-        uint32_t notifyAll();
-        Coro *notifyOneAndGetCoro();
-
-    private:
-        std::deque<MultiWaiter *> _waiters;
+    public:
+        virtual bool waiterAdd(MultiWaiter *waiter) = 0;
+        virtual void waiterDel(MultiWaiter *waiter) = 0;
     };
 }}
 

@@ -2,6 +2,8 @@
 #define _ASYNC_IMPL_MUTEX_HPP_
 
 #include "async/impl/synchronizer.hpp"
+#include <atomic>
+#include <vector>
 
 namespace async { namespace impl
 {
@@ -23,10 +25,12 @@ namespace async { namespace impl
         void unlock();
 
     private:
-        virtual bool waiterAdd(MultiWaiter *waiter);
+        virtual bool waiterAdd(MultiWaiter *waiter) override;
+        virtual void waiterDel(MultiWaiter *waiter) override;
 
     private:
-        Coro    *_owner;
+        std::atomic<Coro *> _owner;
+        std::vector<MultiWaiter *> _waiters;
 
 //Syncronizer
 //        std::mutex _mtx;

@@ -43,88 +43,134 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 1);
+        async::ThreadPool tp(tu, 5);
 
         std::atomic<size_t> cnt(0);
-        size_t amount = 3000000;
-        async::Event event(true);
-        async::Event event2(true);
-        async::Mutex mutex;
+        size_t amount = 300000;
+        async::Mutex mutex0;
+        async::Mutex mutex1;
         async::Mutex mutex2;
+        async::Mutex mutex3;
 
+#define TXTOUT 0
         for(size_t k(0); k<amount; k++)
         {
-            //if(! (k%2))
-            {
-                char tmp[32];
-                sprintf(tmp, "iter (%d)\n", (int)k);
-                std::cout<<tmp; std::cout.flush();
-            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //std::this_thread::yield();
 
-            cm.spawn([k, &event, &event2, &cnt, &mutex, &mutex2]{
+            cm.spawn([k, &cnt, &mutex0, &mutex1, &mutex2, &mutex3]{
+
+                std::this_thread::yield();
+
                 char tmp[32];
                 (void)tmp;
 //                if(!(k&1))
-                if((k&1))
+                if(0 == (k%4))
                 {
-//                    sprintf(tmp, "pre set        %p\n", async::impl::Coro::current());
-//                    std::cout<<tmp; std::cout.flush();
-
-                    async::waitAny(mutex);
-
-//                    sprintf(tmp, "set        %p\n", async::impl::Coro::current());
-//                    std::cout<<tmp; std::cout.flush();
-
-                    size_t i=rand() > RAND_MAX/2;
-                    if(!i)
+                    uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+#if TXTOUT
+                    sprintf(tmp, "%d, in %d locked %d\n", (int)cnt.fetch_add(1), (int)(k%4), mtxIndex);
+                    std::cout<<tmp; std::cout.flush();
+#endif
+                    switch(mtxIndex)
                     {
-                        event.set();
+                    case 0:
+                        mutex0.unlock();
+                        break;
+                    case 1:
+                        mutex1.unlock();
+                        break;
+                    case 2:
+                        mutex2.unlock();
+                        break;
+                    case 3:
+                        mutex3.unlock();
+                        break;
+                    default:
+                        assert(0);
                     }
-                    else
-                    {
-                        event2.set();
-                    }
-
-//                    sprintf(tmp, "after set  %p(%d)\n", async::impl::Coro::current(), (int)i);
-//                    std::cout<<tmp; std::cout.flush();
-
-                    mutex.unlock();
                 }
-                else
+                else if(1 == (k%4))
                 {
-//                    sprintf(tmp, "pre wait        %p\n", async::impl::Coro::current());
-//                    std::cout<<tmp; std::cout.flush();
-
-                    //async::waitAny(mutex2);
-                    mutex2.lock();
-
-//                    sprintf(tmp, "wait       %p\n", async::impl::Coro::current());
-//                    std::cout<<tmp; std::cout.flush();
-
-                    uint32_t i = async::waitAny(event, event2);
-
-//                    sprintf(tmp, "after wait %p (%d)\n", async::impl::Coro::current(), (int)i);
-//                    std::cout<<tmp; std::cout.flush();
-
-                    mutex2.unlock();
+                    uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+#if TXTOUT
+                    sprintf(tmp, "%d, in %d locked %d\n", (int)cnt.fetch_add(1), (int)(k%4), mtxIndex);
+                    std::cout<<tmp; std::cout.flush();
+#endif
+                    switch(mtxIndex)
+                    {
+                    case 0:
+                        mutex0.unlock();
+                        break;
+                    case 1:
+                        mutex1.unlock();
+                        break;
+                    case 2:
+                        mutex2.unlock();
+                        break;
+                    case 3:
+                        mutex3.unlock();
+                        break;
+                    default:
+                        assert(0);
+                    }
                 }
-
-                cnt++;
+                else if(2 == (k%4))
+                {
+                    uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+#if TXTOUT
+                    sprintf(tmp, "%d, in %d locked %d\n", (int)cnt.fetch_add(1), (int)(k%4), mtxIndex);
+                    std::cout<<tmp; std::cout.flush();
+#endif
+                    switch(mtxIndex)
+                    {
+                    case 0:
+                        mutex0.unlock();
+                        break;
+                    case 1:
+                        mutex1.unlock();
+                        break;
+                    case 2:
+                        mutex2.unlock();
+                        break;
+                    case 3:
+                        mutex3.unlock();
+                        break;
+                    default:
+                        assert(0);
+                    }
+                }
+                else if(3 == (k%4))
+                {
+                    uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+#if TXTOUT
+                    sprintf(tmp, "%d, in %d locked %d\n", (int)cnt.fetch_add(1), (int)(k%4), mtxIndex);
+                    std::cout<<tmp; std::cout.flush();
+#endif
+                    switch(mtxIndex)
+                    {
+                    case 0:
+                        mutex0.unlock();
+                        break;
+                    case 1:
+                        mutex1.unlock();
+                        break;
+                    case 2:
+                        mutex2.unlock();
+                        break;
+                    case 3:
+                        mutex3.unlock();
+                        break;
+                    default:
+                        assert(0);
+                    }
+                }
             });
         }
 
         while(cnt < amount)
         {
             std::this_thread::sleep_for(std::chrono::microseconds(1));
-            size_t i=rand() > RAND_MAX/2;
-            if(!i)
-            {
-                event.set();
-            }
-            else
-            {
-                event2.set();
-            }
         }
 
         std::cout<<"done"<<std::endl;
