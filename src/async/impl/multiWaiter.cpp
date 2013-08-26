@@ -196,7 +196,7 @@ namespace async { namespace impl
         if(!coroActive)
         {
             Scheduler *scheduler = _coro->scheduler();
-            scheduler->coroReadyIfHolded(_coro);
+            scheduler->coroReady(_coro);
         }
 
         return true;

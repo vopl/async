@@ -18,6 +18,7 @@ namespace async { namespace impl
 
         bool hasCode();
         void setCode(const std::function<void()> &code);
+        void setCode(std::function<void()> &&code);
 
     public:
         Scheduler *scheduler();
@@ -33,8 +34,6 @@ namespace async { namespace impl
 
         void contextProc();
     };
-
-    typedef std::shared_ptr<Coro> CoroPtr;
 }}
 
 #endif

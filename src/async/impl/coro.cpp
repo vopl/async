@@ -29,6 +29,12 @@ namespace async { namespace impl
 		_code = code;
     }
 
+    void Coro::setCode(std::function<void()> &&code)
+    {
+        assert(!_code);
+        _code = std::forward<std::function<void()>>(code);
+    }
+
     Scheduler *Coro::scheduler()
     {
         return _scheduler;

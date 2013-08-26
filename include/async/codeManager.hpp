@@ -23,6 +23,7 @@ namespace async
         operator Scheduler();
 
         void spawn(const std::function<void()> &code);
+        void spawn(std::function<void()> &&code);
 
     private:
         impl::SchedulerPtr _implScheduler;

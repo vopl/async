@@ -10,7 +10,6 @@
 namespace async { namespace impl
 {
     class Coro;
-    typedef std::shared_ptr<Coro> CoroPtr;
 
     class CoroContainer
     {
@@ -24,13 +23,14 @@ namespace async { namespace impl
 
     public://for busines
         void spawn(const std::function<void()> &code);
+        void spawn(std::function<void()> &&code);
 
     public://for context
         void markCoroExec(Coro *coro);
         void markCoroHold(Coro *coro);
         void markCoroComplete(Coro *coro);
 
-        void coroReadyIfHolded(Coro *coro);
+        void coroReady(Coro *coro);
 
         static Coro *coroCurrent();
 
@@ -43,11 +43,8 @@ namespace async { namespace impl
 
         //boost::multi_index {kind, ptr}
         //fifo for ready
-        std::queue<CoroPtr>     _ready;//fifo
-        std::vector<CoroPtr>	_empty;//push popAny
-        std::set<CoroPtr>       _hold;//insert search-pop
-        std::set<CoroPtr>       _exec;//insert search-pop
-        std::set<CoroPtr>       _emitted;//insert search-pop
+        std::queue<Coro*>     _ready;//fifo
+        std::vector<Coro*>	_empty;//push popAny
     };
 }}
 

@@ -8,7 +8,6 @@
 namespace async { namespace impl
 {
     class Coro;
-    typedef std::shared_ptr<Coro> CoroPtr;
 
     class MultiWaiter;
 

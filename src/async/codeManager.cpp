@@ -26,4 +26,9 @@ namespace async
     {
         return _implScheduler->spawn(code);
     }
+
+    void CodeManager::spawn(std::function<void()> &&code)
+    {
+        return _implScheduler->spawn(std::forward<std::function<void()>>(code));
+    }
 }

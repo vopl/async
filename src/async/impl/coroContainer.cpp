@@ -19,15 +19,15 @@ namespace async { namespace impl
     {
         std::lock_guard<std::mutex> l(_mtx);
 
-    	if(!_hold.empty())
-    	{
-    		std::cerr<<_hold.size()<<std::endl;
-    	}
+//    	if(!_hold.empty())
+//    	{
+//    		std::cerr<<_hold.size()<<std::endl;
+//    	}
         assert(_ready.empty());
         //assert(_empty);
-        assert(_hold.empty());
-        assert(_exec.empty());
-        assert(_emitted.empty());
+//        assert(_hold.empty());
+//        assert(_exec.empty());
+//        assert(_emitted.empty());
     }
 
     Coro *CoroContainer::te_emitWorkPiece()
@@ -39,27 +39,27 @@ namespace async { namespace impl
     		return NULL;
     	}
 
-        CoroPtr sp(_ready.front());
+        Coro *sp(_ready.front());
     	_ready.pop();
 
-    	assert(!_exec.count(sp));
-    	assert(!_hold.count(sp));
+//    	assert(!_exec.count(sp));
+//    	assert(!_hold.count(sp));
     	//assert(!_empty.count(sp));
     	//assert(!_ready.count(sp));
-    	assert(!_emitted.count(sp));
+//    	assert(!_emitted.count(sp));
 
-    	_emitted.insert(sp);
-    	return sp.get();
+//    	_emitted.insert(sp);
+        return sp;
     }
 
     void CoroContainer::spawn(const std::function<void()> &code)
     {
         std::lock_guard<std::mutex> l(_mtx);
 
-        CoroPtr sp;
+        Coro *sp;
     	if(_empty.empty())
     	{
-            sp.reset(new Coro(static_cast<Scheduler *>(this)));
+            sp = new Coro(static_cast<Scheduler *>(this));
     	}
     	else
     	{
@@ -70,9 +70,9 @@ namespace async { namespace impl
     	sp->setCode(code);
 
         Scheduler *scheduler(static_cast<Scheduler*>(this));
-        if(scheduler->pushWorkPiece(sp.get()))
+        if(scheduler->pushWorkPiece(sp))
 		{
-            _emitted.insert(sp);
+//            _emitted.insert(sp);
             return;
 		}
 		else
@@ -81,23 +81,52 @@ namespace async { namespace impl
 		}
     }
 
+    void CoroContainer::spawn(std::function<void()> &&code)
+    {
+        std::lock_guard<std::mutex> l(_mtx);
+
+        Coro *sp;
+        if(_empty.empty())
+        {
+            sp = new Coro(static_cast<Scheduler *>(this));
+        }
+        else
+        {
+            sp = _empty.back();
+            _empty.pop_back();
+        }
+
+        sp->setCode(std::forward<std::function<void()>>(code));
+
+        Scheduler *scheduler(static_cast<Scheduler*>(this));
+        if(scheduler->pushWorkPiece(sp))
+        {
+//            _emitted.insert(sp);
+            return;
+        }
+        else
+        {
+            _ready.push(sp);
+        }
+    }
+
     void CoroContainer::markCoroExec(Coro *coro)
     {
         assert(coro->hasCode());
 
-        CoroPtr sp(coro->shared_from_this());
+        Coro *sp(coro);
 
         {
             std::lock_guard<std::mutex> l(_mtx);
 
-            assert(!_exec.count(sp));
-            assert(!_hold.count(sp));
+//            assert(!_exec.count(sp));
+//            assert(!_hold.count(sp));
             //assert(!_empty.count(sp));
             //assert(!_ready.count(sp));
-            assert(_emitted.count(sp));
+//            assert(_emitted.count(sp));
 
-            _emitted.erase(sp);
-            _exec.insert(sp);
+//            _emitted.erase(sp);
+//            _exec.insert(sp);
         }
 
         _current = coro;
@@ -105,21 +134,21 @@ namespace async { namespace impl
 
     void CoroContainer::markCoroHold(Coro *coro)
     {
-        CoroPtr sp(coro->shared_from_this());
+        Coro *sp(coro);
 
         {
             std::lock_guard<std::mutex> l(_mtx);
 
-            assert(_exec.count(sp));
-            assert(!_hold.count(sp));
+//            assert(_exec.count(sp));
+//            assert(!_hold.count(sp));
             //assert(!_empty.count(sp));
             //assert(!_ready.count(sp));
-            assert(!_emitted.count(sp));
+//            assert(!_emitted.count(sp));
 
-            _exec.erase(sp);
+//            _exec.erase(sp);
 
             assert(coro->hasCode());
-            _hold.insert(sp);
+//            _hold.insert(sp);
         }
 
         _current = nullptr;
@@ -127,18 +156,18 @@ namespace async { namespace impl
 
     void CoroContainer::markCoroComplete(Coro *coro)
     {
-        CoroPtr sp(coro->shared_from_this());
+        Coro *sp(coro);
 
         {
             std::lock_guard<std::mutex> l(_mtx);
 
-            assert(_exec.count(sp));
-            assert(!_hold.count(sp));
+//            assert(_exec.count(sp));
+//            assert(!_hold.count(sp));
             //assert(!_empty.count(sp));
             //assert(!_ready.count(sp));
-            assert(!_emitted.count(sp));
+//            assert(!_emitted.count(sp));
 
-            _exec.erase(sp);
+//            _exec.erase(sp);
 
             assert(!coro->hasCode());
             _empty.push_back(sp);
@@ -152,35 +181,18 @@ namespace async { namespace impl
         return _current;
     }
 
-    void CoroContainer::coroReadyIfHolded(Coro *coro)
+    void CoroContainer::coroReady(Coro *coro)
     {
         assert(coro->hasCode());
 
-        CoroPtr sp(coro->shared_from_this());
+        Coro *sp(coro);
         Scheduler *scheduler = static_cast<Scheduler *>(this);
 
         {
             std::lock_guard<std::mutex> l(_mtx);
 
-            std::set<CoroPtr>::iterator holdIter = _hold.find(sp);
-            if(_hold.end() == holdIter)
-            {
-                //assert(!"check this, secondary context wakeup after multi wait");
-                //already execute
-                return;
-            }
-
-            _hold.erase(holdIter);
-
-            assert(!_exec.count(sp));
-            assert(!_hold.count(sp));
-            //assert(!_empty.count(sp));
-            //assert(!_ready.count(sp));
-            assert(!_emitted.count(sp));
-
             if(scheduler->pushWorkPiece(coro))
             {
-                _emitted.insert(sp);
                 return;
             }
             else
