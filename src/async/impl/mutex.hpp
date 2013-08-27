@@ -29,8 +29,19 @@ namespace async { namespace impl
         virtual void waiterDel(MultiWaiter *waiter) override;
 
     private:
-        std::atomic<Coro *> _owner;
-        std::vector<MultiWaiter *> _waiters;
+        enum class State
+                : uint32_t
+        {
+            unlocked,
+            locked,
+            busy
+
+        };
+
+        std::atomic<State> _state;
+
+        typedef std::vector<MultiWaiter *> TVWaiters;
+        TVWaiters _waiters;
 
 //Syncronizer
 //        std::mutex _mtx;

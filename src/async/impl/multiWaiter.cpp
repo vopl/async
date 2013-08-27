@@ -8,13 +8,14 @@
 
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 namespace async { namespace impl
 {
     MultiWaiter::MultiWaiter(Synchronizer **synchronizersBuffer)
-        : _synchronizersBuffer(synchronizersBuffer)
+        : _state(markActive)
+        , _synchronizersBuffer(synchronizersBuffer)
         , _synchronizersAmount(0)
-        , _state(markActive)
         , _coro()
     {
 
@@ -41,13 +42,18 @@ namespace async { namespace impl
         {
             if(!_synchronizersBuffer[idxAdd]->waiterAdd(this))
             {
-                uint32_t notified= _state.load();
-                assert(_state.load() <= idxAdd);
-
                 for(uint32_t idxDel(0); idxDel<idxAdd; idxDel++)
                 {
                     _synchronizersBuffer[idxDel]->waiterDel(this);
                 }
+
+                uint32_t notified = _state.load();
+                while(notified == markPreNotified)
+                {
+                    std::this_thread::yield();
+                    notified = _state.load();
+                }
+                assert(notified < 1024);//1024 - maximum Syncronizers in progress for this waiter instance
 
                 return notified;
             }
@@ -71,11 +77,11 @@ namespace async { namespace impl
             {
             case markActive:
                 //spurious failure, try one more
-                break;
+                continue;
             case markPreNotified:
                 //some Syncronizer fired but not complete interactions, await
                 std::this_thread::yield();
-                break;
+                continue;
             case markDeactivating:
             case markInactive:
                 //impossible
@@ -92,9 +98,7 @@ namespace async { namespace impl
 
 
 
-        //LOCK std::lock_guard<std::mutex> l2(_mtx);
         assert(_state.load() < _synchronizersAmount);
-
 
         for(uint32_t i(0); i<_synchronizersAmount; i++)
         {
@@ -119,7 +123,7 @@ namespace async { namespace impl
                 uint32_t wasState = markActive;
                 if(_state.compare_exchange_weak(wasState, markPreNotified))
                 {
-                    coroActive = markActive == wasState;
+                    coroActive = true;//markActive == wasState;
                     break;
                 }
 
@@ -162,7 +166,6 @@ namespace async { namespace impl
                 {
                 case markActive:
                     //await more, spurious fail in _notified.compare_exchange_weak
-                    wasState = markActive;
                     break;
                 case markPreNotified:
                     return false;
@@ -173,7 +176,6 @@ namespace async { namespace impl
                     break;
                 case markInactive:
                     //context deactivated, try from inactive state
-                    wasState = markInactive;
                     break;
                 default:
                     assert(wasState < 1024);
@@ -187,10 +189,9 @@ namespace async { namespace impl
             if(notifier == _synchronizersBuffer[i])
             {
                 _state.store(i);
+                break;
             }
         }
-        assert(_state.load() < _synchronizersAmount);
-
 
         assert(_coro);
         if(!coroActive)

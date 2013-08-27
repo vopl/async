@@ -43,7 +43,7 @@ int main()
 
 
     {
-        async::ThreadPool tp(tu, 5);
+        async::ThreadPool tp(tu, 4);
 
         std::atomic<size_t> cnt(0);
         size_t amount = 300000;
@@ -55,21 +55,21 @@ int main()
 #define TXTOUT 0
         for(size_t k(0); k<amount; k++)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
             //std::this_thread::yield();
 
             cm.spawn([k, &cnt, &mutex0, &mutex1, &mutex2, &mutex3]{
 
                 std::this_thread::yield();
 
-                char tmp[32];
-                (void)tmp;
-//                if(!(k&1))
                 if(0 == (k%4))
                 {
                     uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                    int v = cnt.fetch_add(1);
 #if TXTOUT
-                    sprintf(tmp, "%d, in %d locked %d\n", (int)cnt.fetch_add(1), (int)(k%4), mtxIndex);
+                    char tmp[32];
+                    (void)tmp;
+                    sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
                     std::cout<<tmp; std::cout.flush();
 #endif
                     switch(mtxIndex)
@@ -93,8 +93,11 @@ int main()
                 else if(1 == (k%4))
                 {
                     uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                    int v = cnt.fetch_add(1);
 #if TXTOUT
-                    sprintf(tmp, "%d, in %d locked %d\n", (int)cnt.fetch_add(1), (int)(k%4), mtxIndex);
+                    char tmp[32];
+                    (void)tmp;
+                    sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
                     std::cout<<tmp; std::cout.flush();
 #endif
                     switch(mtxIndex)
@@ -118,8 +121,11 @@ int main()
                 else if(2 == (k%4))
                 {
                     uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                    int v = cnt.fetch_add(1);
 #if TXTOUT
-                    sprintf(tmp, "%d, in %d locked %d\n", (int)cnt.fetch_add(1), (int)(k%4), mtxIndex);
+                    char tmp[32];
+                    (void)tmp;
+                    sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
                     std::cout<<tmp; std::cout.flush();
 #endif
                     switch(mtxIndex)
@@ -143,8 +149,11 @@ int main()
                 else if(3 == (k%4))
                 {
                     uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                    int v = cnt.fetch_add(1);
 #if TXTOUT
-                    sprintf(tmp, "%d, in %d locked %d\n", (int)cnt.fetch_add(1), (int)(k%4), mtxIndex);
+                    char tmp[32];
+                    (void)tmp;
+                    sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
                     std::cout<<tmp; std::cout.flush();
 #endif
                     switch(mtxIndex)
@@ -173,7 +182,7 @@ int main()
             std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
 
-        std::cout<<"done"<<std::endl;
+        std::cout<<"done "<<cnt<<std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

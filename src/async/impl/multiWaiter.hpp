@@ -42,14 +42,15 @@ namespace async { namespace impl
         bool notify(Synchronizer *notifier, bool guaranteeNonInactive);
 
     private:
-        Synchronizer **_synchronizersBuffer;
-        uint32_t _synchronizersAmount;
-
         std::atomic<uint32_t> _state;//mark or fired Synchronizer index
         static const uint32_t markActive = (uint32_t)-1;
         static const uint32_t markPreNotified = (uint32_t)-2;
         static const uint32_t markDeactivating = (uint32_t)-3;
         static const uint32_t markInactive = (uint32_t)-4;
+
+        Synchronizer **_synchronizersBuffer;
+        uint32_t _synchronizersAmount;
+
         Coro *_coro;
     };
 

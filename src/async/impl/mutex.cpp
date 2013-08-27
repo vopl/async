@@ -4,16 +4,18 @@
 
 #include <thread>
 #include <cassert>
+//#include <iostream>
 
 namespace async { namespace impl
 {
     Mutex::Mutex()
-        : _owner()
+        : _state(State::unlocked)
     {
     }
 
     Mutex::~Mutex()
     {
+        assert(State::unlocked == _state && _waiters.empty());
     }
 
     void Mutex::lock()
@@ -37,8 +39,8 @@ namespace async { namespace impl
 
     bool Mutex::tryLock()
     {
-        Coro *was = nullptr;
-        if(_owner.compare_exchange_strong(was, Coro::current()))
+        State was = State::unlocked;
+        if(_state.compare_exchange_strong(was, State::locked))
         {
             return true;
         }
@@ -48,94 +50,141 @@ namespace async { namespace impl
 
     bool Mutex::isLocked()
     {
-        return _owner.load(/*relaxed?*/) ? true : false;
+        switch(_state.load(/*relaxed?*/))
+        {
+        case State::busy:
+        case State::locked:
+            return true;
+        default:
+            break;
+        }
+
+        return false;
     }
 
-    Coro *markLocked = (Coro *)1;
     void Mutex::unlock()
     {
+//        std::cout<<"unlock\n"; std::cout.flush();
         for(;;)
         {
-            Coro *was = Coro::current();
+            State was = State::locked;
 
-            if(_owner.compare_exchange_strong(was, markLocked))
+            if(_state.compare_exchange_strong(was, State::busy))
             {
+//                std::cout<<"unlock make busy\n"; std::cout.flush();
                 //wakeup next if exists
-                Coro *next = nullptr;
-                while(!_waiters.empty())
+                if(_waiters.empty())
                 {
-                    MultiWaiter *waiter = _waiters.front();
-                    _waiters.erase(_waiters.begin());
+                    //nobody
+                    _state.exchange(State::unlocked);
+//                    std::cout<<"unlock make unlocked\n"; std::cout.flush();
+                    return;
+                }
 
-                    next = waiter->getCoro();
+                //notify waiters by queue, drop all notified, who accept notifications - stand locker
+                TVWaiters::iterator iter(_waiters.begin());
+                TVWaiters::iterator end(_waiters.end());
+
+                for(; iter != end; ++iter)
+                {
+                    MultiWaiter *waiter = *iter;
                     if(waiter->notify(this, false))
                     {
-                        break;
-                    }
+                        ++iter;
 
-                    next = nullptr;
+                        //some one notified successfully
+                        _waiters.erase(_waiters.begin(), iter);
+                        _state.exchange(State::locked);
+//                        std::cout<<"unlock make locked\n"; std::cout.flush();
+                        return;
+                    }
                 }
-                _owner.exchange(next);
-                break;
+
+                //no one
+                _waiters.clear();
+                _state.exchange(State::unlocked);
+//                std::cout<<"unlock make unlocked because nobody\n"; std::cout.flush();
+                return;
             }
 
-            if(Coro::current() == was)
+            switch(was)
             {
+            case State::unlocked:
+//                std::cout<<"unlock unable busy, unlocked\n"; std::cout.flush();
+                assert(!"unable to unlock already unlocked mutex");
+                return;
+            case State::locked:
+//                std::cout<<"unlock unable busy, locked\n"; std::cout.flush();
                 //spurious failure, try one more
                 continue;
-            }
-            if(markLocked == was)
-            {
-                //locked by some one, wait
+            case State::busy:
+//                std::cout<<"unlock unable busy, busy\n"; std::cout.flush();
+                //over thread make changes, wait
                 std::this_thread::yield();
                 continue;
+            default:
+                assert(!"unknown mutex state");
+                break;
             }
         }
     }
 
     bool Mutex::waiterAdd(MultiWaiter *waiter)
     {
-        Coro *was = nullptr;
-        Coro *current = waiter->getCoro();
-
+//        std::cout<<"waiterAdd\n"; std::cout.flush();
         for(;;)
         {
-            if(_owner.compare_exchange_weak(was, current))
+            State was = State::unlocked;
+            if(_state.compare_exchange_weak(was, State::busy))
             {
-                if(!waiter->notify(this, true))
+//                std::cout<<"waiteAdd, make busy\n"; std::cout.flush();
+                assert(_waiters.empty());
+                if(waiter->notify(this, true))
                 {
-                    _owner.exchange(nullptr);
+                    //waiter already notified by 3rd side
+                    _state.exchange(State::locked);
+//                    std::cout<<"waiteAdd, make locked\n"; std::cout.flush();
+                }
+                else
+                {
+                    //waiter already notified by 3rd side
+                    _state.exchange(State::unlocked);
+//                    std::cout<<"waiteAdd, make unlocked\n"; std::cout.flush();
                 }
                 return false;
             }
 
-            if(!was)
+            switch(was)
             {
+            case State::unlocked:
+//                std::cout<<"waiteAdd, unable busy, unlocked\n"; std::cout.flush();
+                assert(_waiters.empty());
                 //spurious failure, try one more
                 continue;
-            }
-            else if(markLocked == was)
-            {
-                //do spin, wait
+            case State::busy:
+//                std::cout<<"waiteAdd, unable busy, busy\n"; std::cout.flush();
+                //over thread make changes, wait
                 std::this_thread::yield();
-                was = nullptr;
                 continue;
-            }
+            case State::locked:
+//                std::cout<<"waiteAdd, unable busy, locked\n"; std::cout.flush();
+                //already locked by over waiter, put to waiters queue
+                if(_state.compare_exchange_strong(was, State::busy))
+                {
+//                    std::cout<<"waiteAdd, locked, busy\n"; std::cout.flush();
+                    _waiters.push_back(waiter);
 
-            //already locked by over waiter, put to waiters queue
-            if(_owner.compare_exchange_strong(was, markLocked))
-            {
-                _waiters.push_back(waiter);
+                    //keep locked for over waiter
+                    _state.exchange(State::locked);
+//                    std::cout<<"waiteAdd, make locked\n"; std::cout.flush();
+                    return true;
+                }
 
-                assert(markLocked == _owner.load());
-                _owner.exchange(was);
-                return true;
-            }
-            else
-            {
-                //waiter is dequeued yet, try one more
-                was = nullptr;
+                //waiter is not queued yet, try one more
                 continue;
+            default:
+                assert(!"unknown mutex state");
+                break;
             }
         }
 
@@ -145,37 +194,45 @@ namespace async { namespace impl
 
     void Mutex::waiterDel(MultiWaiter *waiter)
     {
-        Coro *was = nullptr;
+//        std::cout<<"waiteDel\n"; std::cout.flush();
+        State was;
 
         for(;;)
         {
-            assert(nullptr == was);
-            if(_owner.compare_exchange_weak(was,markLocked))
+            was = State::unlocked;
+            if(_state.compare_exchange_weak(was, State::busy))
             {
-                //stop loop, remove waiter
+//                std::cout<<"waiteDel, make busy\n"; std::cout.flush();
+                //busy mode enabled, stop loop, remove waiter from queue
                 break;
             }
 
-            if(markLocked == was)
+            if(State::unlocked == was)
             {
+//                std::cout<<"waiteDel, unable busy, unlocked\n"; std::cout.flush();
+                //spuriout failure in CAS, try one more
+                continue;
+            }
+
+            if(State::busy == was)
+            {
+//                std::cout<<"waiteDel, unable busy, busy\n"; std::cout.flush();
                 std::this_thread::yield();
-                was = nullptr;
                 continue;
             }
 
-            //already locked by over waiter, do local lock from him
-            if(_owner.compare_exchange_strong(was, markLocked))
+            //locked by over waiter, do local busy-lock from him
+            if(_state.compare_exchange_strong(was, State::busy))
             {
-                //stop loop, remove waiter
+//                std::cout<<"waiteDel, unable busy, locked, busy\n"; std::cout.flush();
+                //busy mode enabled, stop loop, remove waiter from queue, original lock state preserved in _was_
                 break;
             }
-            else
-            {
-                //waiter is not queued yet, try one more
-                was = nullptr;
-                continue;
-            }
+
+            //waiter is not queued yet, try one more
+            continue;
         }
+        //note, original lock state preserved in _was_
 
         for(std::vector<MultiWaiter *>::iterator iter(_waiters.begin()), end(_waiters.end()); iter != end; ++iter)
         {
@@ -186,8 +243,10 @@ namespace async { namespace impl
             }
         }
 
-        assert(markLocked == _owner.load());
-        _owner.exchange(was);
+        assert(State::busy == _state.load());
+        assert(State::busy != was);
+        _state.exchange(was);
+//        std::cout<<"waiteDel, restore old\n"; std::cout.flush();
     }
 
 
