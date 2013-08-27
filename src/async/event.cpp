@@ -14,6 +14,11 @@ namespace async
     {
     }
 
+    void Event::wait()
+    {
+        return impl().wait();
+    }
+
     size_t Event::set()
     {
         return impl().set();

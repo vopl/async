@@ -24,7 +24,7 @@ namespace async
         Event(bool autoReset);
         ~Event();
 
-        //void wait();
+        void wait();
         size_t set();
         size_t pulse();
 

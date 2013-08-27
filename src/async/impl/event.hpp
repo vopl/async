@@ -17,6 +17,8 @@ namespace async { namespace impl
         Event(bool autoReset);
         virtual ~Event();
 
+        void wait();
+
         size_t set();
         size_t pulse();
 
