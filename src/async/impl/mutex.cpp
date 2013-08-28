@@ -140,7 +140,7 @@ namespace async { namespace impl
                 assert(_waiters.empty());
                 if(waiter->notify(this, true))
                 {
-                    //waiter already notified by 3rd side
+                    //waiter notified successfully, his come locker
                     _state.exchange(State::locked);
 //                    std::cout<<"waiteAdd, make locked\n"; std::cout.flush();
                 }

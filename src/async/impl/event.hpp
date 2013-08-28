@@ -2,6 +2,8 @@
 #define _ASYNC_IMPL_EVENT_HPP_
 
 #include "async/impl/synchronizer.hpp"
+#include <atomic>
+#include <vector>
 #include <cassert>
 
 namespace async { namespace impl
@@ -27,15 +29,21 @@ namespace async { namespace impl
 
     private:
         virtual bool waiterAdd(Waiter *waiter) override;
-        virtual void waiterDel(Waiter *waiter) override {assert(0);}
-        size_t waitersAmount() {assert(0);return 0;}
-        bool notifyOne() {assert(0); return false;}
-        size_t notifyAll() {assert(0); return 0;}
-        void waiterAddInternal(...) {assert(0);}
+        virtual void waiterDel(Waiter *waiter) override;
 
     private:
+        enum class State
+        {
+            nonsignalled,
+            signalled,
+            busy
+        };
+
         bool _autoReset;
-        bool _state;
+        std::atomic<State> _state;
+
+        typedef std::vector<Waiter *> TVWaiters;
+        TVWaiters _waiters;
 
 //Syncronizer
 //        std::mutex _mtx;

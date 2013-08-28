@@ -21,7 +21,7 @@ namespace async
         Event &operator=(const Event &other) = delete;
 
     public:
-        Event(bool autoReset);
+        Event(bool autoReset = false);
         ~Event();
 
         void wait();

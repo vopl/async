@@ -49,10 +49,15 @@ int main()
         std::atomic<size_t> cnt(0);
         size_t amount = 300;
         size_t mult = 30*1000;
-        async::Mutex mutex0;
-        async::Mutex mutex1;
-        async::Mutex mutex2;
-        async::Mutex mutex3;
+        async::Event event0(true);
+        async::Event event1(true);
+        async::Event event2(true);
+        async::Event event3(true);
+
+        event0.set();
+        event1.set();
+        event2.set();
+        event3.set();
 
 #define TXTOUT 0
         for(size_t i(0); i<amount; i++)
@@ -60,14 +65,14 @@ int main()
             //std::this_thread::sleep_for(std::chrono::milliseconds(1));
             //std::this_thread::yield();
 
-            cm.spawn([i, mult, &cnt, &mutex0, &mutex1, &mutex2, &mutex3]{
+            cm.spawn([i, mult, &cnt, &event0, &event1, &event2, &event3]{
 
                 for(size_t m(0); m<mult; m++)
                 {
                     size_t k = i*mult+m;
                     if(0 == (k%4))
                     {
-                        uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                        uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
                         int v = cnt.fetch_add(1);
                         (void)v;
 #if TXTOUT
@@ -79,16 +84,16 @@ int main()
                         switch(mtxIndex)
                         {
                         case 0:
-                            mutex0.unlock();
+                            event0.set();
                             break;
                         case 1:
-                            mutex1.unlock();
+                            event1.set();
                             break;
                         case 2:
-                            mutex2.unlock();
+                            event2.set();
                             break;
                         case 3:
-                            mutex3.unlock();
+                            event3.set();
                             break;
                         default:
                             assert(0);
@@ -96,7 +101,7 @@ int main()
                     }
                     else if(1 == (k%4))
                     {
-                        uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                        uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
                         int v = cnt.fetch_add(1);
                         (void)v;
 #if TXTOUT
@@ -108,16 +113,16 @@ int main()
                         switch(mtxIndex)
                         {
                         case 0:
-                            mutex0.unlock();
+                            event0.set();
                             break;
                         case 1:
-                            mutex1.unlock();
+                            event1.set();
                             break;
                         case 2:
-                            mutex2.unlock();
+                            event2.set();
                             break;
                         case 3:
-                            mutex3.unlock();
+                            event3.set();
                             break;
                         default:
                             assert(0);
@@ -125,7 +130,7 @@ int main()
                     }
                     else if(2 == (k%4))
                     {
-                        uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                        uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
                         int v = cnt.fetch_add(1);
                         (void)v;
 #if TXTOUT
@@ -137,16 +142,16 @@ int main()
                         switch(mtxIndex)
                         {
                         case 0:
-                            mutex0.unlock();
+                            event0.set();
                             break;
                         case 1:
-                            mutex1.unlock();
+                            event1.set();
                             break;
                         case 2:
-                            mutex2.unlock();
+                            event2.set();
                             break;
                         case 3:
-                            mutex3.unlock();
+                            event3.set();
                             break;
                         default:
                             assert(0);
@@ -154,7 +159,7 @@ int main()
                     }
                     else if(3 == (k%4))
                     {
-                        uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                        uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
                         int v = cnt.fetch_add(1);
                         (void)v;
 #if TXTOUT
@@ -166,16 +171,16 @@ int main()
                         switch(mtxIndex)
                         {
                         case 0:
-                            mutex0.unlock();
+                            event0.set();
                             break;
                         case 1:
-                            mutex1.unlock();
+                            event1.set();
                             break;
                         case 2:
-                            mutex2.unlock();
+                            event2.set();
                             break;
                         case 3:
-                            mutex3.unlock();
+                            event3.set();
                             break;
                         default:
                             assert(0);
