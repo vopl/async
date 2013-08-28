@@ -21,6 +21,15 @@ namespace async { namespace impl
 
     }
 
+    MultiWaiter::MultiWaiter(Synchronizer **synchronizersBuffer, uint32_t synchronizersAmount)
+        : _state(markActive)
+        , _synchronizersBuffer(synchronizersBuffer)
+        , _synchronizersAmount(synchronizersAmount)
+        , _coro()
+    {
+
+    }
+
     MultiWaiter::~MultiWaiter()
     {
     }

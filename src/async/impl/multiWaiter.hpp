@@ -25,6 +25,7 @@ namespace async { namespace impl
     {
     public:
         MultiWaiter(Synchronizer **synchronizersBuffer);
+        MultiWaiter(Synchronizer **synchronizersBuffer, uint32_t synchronizersAmount);
         ~MultiWaiter();
 
         void push(Synchronizer *synchronizer);

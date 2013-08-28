@@ -15,6 +15,7 @@ namespace async
             ThreadState *stateEvt = &_states[idx];
             thread = std::thread([this,stateEvt]{
                 EThreadUtilizationResult etur = _tu.te_utilize(stateEvt);
+                (void)etur;
                 assert(etur_releaseRequest == etur);
             });
         }
@@ -31,6 +32,7 @@ namespace async
             _states[idx].waitNot(ThreadState::init);
 
             EThreadReleaseResult etrr = _tu.release(thread.native_handle());
+            (void)etrr;
             assert(etrr_ok == etrr);
         }
         for(size_t idx(0); idx<amount; idx++)

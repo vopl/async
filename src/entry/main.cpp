@@ -31,6 +31,7 @@ int main()
                     [&t,&tu] ()
                     {
                         async::EThreadUtilizationResult etur = tu.te_utilize(std::chrono::nanoseconds(200));
+                        (void)etur;
                         assert(async::etur_limitExhausted == etur);
 
                         assert(async::etrr_notInWork == tu.te_release());
@@ -66,6 +67,7 @@ int main()
                 {
                     uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
                     int v = cnt.fetch_add(1);
+                    (void)v;
 #if TXTOUT
                     char tmp[32];
                     (void)tmp;
@@ -94,6 +96,7 @@ int main()
                 {
                     uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
                     int v = cnt.fetch_add(1);
+                    (void)v;
 #if TXTOUT
                     char tmp[32];
                     (void)tmp;
@@ -122,6 +125,7 @@ int main()
                 {
                     uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
                     int v = cnt.fetch_add(1);
+                    (void)v;
 #if TXTOUT
                     char tmp[32];
                     (void)tmp;
@@ -150,6 +154,7 @@ int main()
                 {
                     uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
                     int v = cnt.fetch_add(1);
+                    (void)v;
 #if TXTOUT
                     char tmp[32];
                     (void)tmp;

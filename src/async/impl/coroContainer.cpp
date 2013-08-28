@@ -114,10 +114,10 @@ namespace async { namespace impl
     {
         assert(coro->hasCode());
 
-        Coro *sp(coro);
+        //Coro *sp(coro);
 
         {
-            std::lock_guard<std::mutex> l(_mtx);
+            //std::lock_guard<std::mutex> l(_mtx);
 
 //            assert(!_exec.count(sp));
 //            assert(!_hold.count(sp));
@@ -134,10 +134,10 @@ namespace async { namespace impl
 
     void CoroContainer::markCoroHold(Coro *coro)
     {
-        Coro *sp(coro);
+        //Coro *sp(coro);
 
         {
-            std::lock_guard<std::mutex> l(_mtx);
+            //std::lock_guard<std::mutex> l(_mtx);
 
 //            assert(_exec.count(sp));
 //            assert(!_hold.count(sp));

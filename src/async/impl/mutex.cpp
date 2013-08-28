@@ -25,9 +25,8 @@ namespace async { namespace impl
             return;
         }
 
-        Synchronizer *synchronizersBuffer[1];
-        MultiWaiter multiWaiter(synchronizersBuffer);
-        multiWaiter.push(this);
+        Synchronizer *synchronizersBuffer[1] = {this};
+        MultiWaiter multiWaiter(synchronizersBuffer, 1);
 
         uint32_t waiterResult = multiWaiter.waitAny();
 
