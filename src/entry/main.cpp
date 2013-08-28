@@ -47,142 +47,145 @@ int main()
         async::ThreadPool tp(tu, 4);
 
         std::atomic<size_t> cnt(0);
-        size_t amount = 300000;
+        size_t amount = 300;
+        size_t mult = 30*1000;
         async::Mutex mutex0;
         async::Mutex mutex1;
         async::Mutex mutex2;
         async::Mutex mutex3;
 
 #define TXTOUT 0
-        for(size_t k(0); k<amount; k++)
+        for(size_t i(0); i<amount; i++)
         {
             //std::this_thread::sleep_for(std::chrono::milliseconds(1));
             //std::this_thread::yield();
 
-            cm.spawn([k, &cnt, &mutex0, &mutex1, &mutex2, &mutex3]{
+            cm.spawn([i, mult, &cnt, &mutex0, &mutex1, &mutex2, &mutex3]{
 
-                std::this_thread::yield();
-
-                if(0 == (k%4))
+                for(size_t m(0); m<mult; m++)
                 {
-                    uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
-                    int v = cnt.fetch_add(1);
-                    (void)v;
-#if TXTOUT
-                    char tmp[32];
-                    (void)tmp;
-                    sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
-                    std::cout<<tmp; std::cout.flush();
-#endif
-                    switch(mtxIndex)
+                    size_t k = i*mult+m;
+                    if(0 == (k%4))
                     {
-                    case 0:
-                        mutex0.unlock();
-                        break;
-                    case 1:
-                        mutex1.unlock();
-                        break;
-                    case 2:
-                        mutex2.unlock();
-                        break;
-                    case 3:
-                        mutex3.unlock();
-                        break;
-                    default:
-                        assert(0);
+                        uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                        int v = cnt.fetch_add(1);
+                        (void)v;
+#if TXTOUT
+                        char tmp[32];
+                        (void)tmp;
+                        sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
+                        std::cout<<tmp; std::cout.flush();
+#endif
+                        switch(mtxIndex)
+                        {
+                        case 0:
+                            mutex0.unlock();
+                            break;
+                        case 1:
+                            mutex1.unlock();
+                            break;
+                        case 2:
+                            mutex2.unlock();
+                            break;
+                        case 3:
+                            mutex3.unlock();
+                            break;
+                        default:
+                            assert(0);
+                        }
                     }
-                }
-                else if(1 == (k%4))
-                {
-                    uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
-                    int v = cnt.fetch_add(1);
-                    (void)v;
-#if TXTOUT
-                    char tmp[32];
-                    (void)tmp;
-                    sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
-                    std::cout<<tmp; std::cout.flush();
-#endif
-                    switch(mtxIndex)
+                    else if(1 == (k%4))
                     {
-                    case 0:
-                        mutex0.unlock();
-                        break;
-                    case 1:
-                        mutex1.unlock();
-                        break;
-                    case 2:
-                        mutex2.unlock();
-                        break;
-                    case 3:
-                        mutex3.unlock();
-                        break;
-                    default:
-                        assert(0);
+                        uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                        int v = cnt.fetch_add(1);
+                        (void)v;
+#if TXTOUT
+                        char tmp[32];
+                        (void)tmp;
+                        sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
+                        std::cout<<tmp; std::cout.flush();
+#endif
+                        switch(mtxIndex)
+                        {
+                        case 0:
+                            mutex0.unlock();
+                            break;
+                        case 1:
+                            mutex1.unlock();
+                            break;
+                        case 2:
+                            mutex2.unlock();
+                            break;
+                        case 3:
+                            mutex3.unlock();
+                            break;
+                        default:
+                            assert(0);
+                        }
                     }
-                }
-                else if(2 == (k%4))
-                {
-                    uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
-                    int v = cnt.fetch_add(1);
-                    (void)v;
-#if TXTOUT
-                    char tmp[32];
-                    (void)tmp;
-                    sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
-                    std::cout<<tmp; std::cout.flush();
-#endif
-                    switch(mtxIndex)
+                    else if(2 == (k%4))
                     {
-                    case 0:
-                        mutex0.unlock();
-                        break;
-                    case 1:
-                        mutex1.unlock();
-                        break;
-                    case 2:
-                        mutex2.unlock();
-                        break;
-                    case 3:
-                        mutex3.unlock();
-                        break;
-                    default:
-                        assert(0);
+                        uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                        int v = cnt.fetch_add(1);
+                        (void)v;
+#if TXTOUT
+                        char tmp[32];
+                        (void)tmp;
+                        sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
+                        std::cout<<tmp; std::cout.flush();
+#endif
+                        switch(mtxIndex)
+                        {
+                        case 0:
+                            mutex0.unlock();
+                            break;
+                        case 1:
+                            mutex1.unlock();
+                            break;
+                        case 2:
+                            mutex2.unlock();
+                            break;
+                        case 3:
+                            mutex3.unlock();
+                            break;
+                        default:
+                            assert(0);
+                        }
                     }
-                }
-                else if(3 == (k%4))
-                {
-                    uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
-                    int v = cnt.fetch_add(1);
-                    (void)v;
-#if TXTOUT
-                    char tmp[32];
-                    (void)tmp;
-                    sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
-                    std::cout<<tmp; std::cout.flush();
-#endif
-                    switch(mtxIndex)
+                    else if(3 == (k%4))
                     {
-                    case 0:
-                        mutex0.unlock();
-                        break;
-                    case 1:
-                        mutex1.unlock();
-                        break;
-                    case 2:
-                        mutex2.unlock();
-                        break;
-                    case 3:
-                        mutex3.unlock();
-                        break;
-                    default:
-                        assert(0);
+                        uint32_t mtxIndex = async::waitAny(mutex0, mutex1, mutex2, mutex3);
+                        int v = cnt.fetch_add(1);
+                        (void)v;
+#if TXTOUT
+                        char tmp[32];
+                        (void)tmp;
+                        sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
+                        std::cout<<tmp; std::cout.flush();
+#endif
+                        switch(mtxIndex)
+                        {
+                        case 0:
+                            mutex0.unlock();
+                            break;
+                        case 1:
+                            mutex1.unlock();
+                            break;
+                        case 2:
+                            mutex2.unlock();
+                            break;
+                        case 3:
+                            mutex3.unlock();
+                            break;
+                        default:
+                            assert(0);
+                        }
                     }
                 }
             });
         }
 
-        while(cnt < amount)
+        while(cnt < amount*mult)
         {
             std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
