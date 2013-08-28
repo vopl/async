@@ -8,7 +8,7 @@ namespace async
 {
     namespace details
     {
-        class MultiWaiter;
+        class Waiter;
     }
 
     class Mutex
@@ -31,7 +31,7 @@ namespace async
         void unlock();
 
     private:
-        friend class details::MultiWaiter;
+        friend class details::Waiter;
     };
 }
 

@@ -1,5 +1,5 @@
-#include "async/details/multiWaiter.hpp"
-#include "async/impl/multiWaiter.hpp"
+#include "async/details/waiter.hpp"
+#include "async/impl/waiter.hpp"
 
 #include "async/mutex.hpp"
 #include "async/impl/mutex.hpp"
@@ -11,31 +11,31 @@
 
 namespace async { namespace details
 {
-    MultiWaiter::MultiWaiter(impl::Synchronizer **synchronizersBuffer)
+    Waiter::Waiter(impl::Synchronizer **synchronizersBuffer)
         : Base(synchronizersBuffer)
     {
     }
 
-    MultiWaiter::~MultiWaiter()
+    Waiter::~Waiter()
     {
     }
 
-    uint32_t MultiWaiter::waitAny()
+    uint32_t Waiter::any()
     {
-        return impl().waitAny();
+        return impl().any();
     }
 
-    void MultiWaiter::waitAll()
+    void Waiter::all()
     {
         assert(!"not impl yet");
     }
 
-    void MultiWaiter::push(Mutex &mutex)
+    void Waiter::push(Mutex &mutex)
     {
         impl().push(&mutex.impl());
     }
 
-    void MultiWaiter::push(Event &event)
+    void Waiter::push(Event &event)
     {
         impl().push(&event.impl());
     }

@@ -4,7 +4,7 @@ using namespace std;
 #include "async/impl/scheduler.hpp"
 #include "async/impl/event.hpp"
 #include "async/impl/mutex.hpp"
-#include "async/impl/multiWaiter.hpp"
+#include "async/impl/waiter.hpp"
 
 int main()
 {
@@ -31,7 +31,7 @@ int main()
            ONE(Scheduler)
            ONE(Event)
            ONE(Mutex)
-           ONE(MultiWaiter)
+           ONE(Waiter)
 
 
            "}\n"

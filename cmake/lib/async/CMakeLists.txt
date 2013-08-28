@@ -129,7 +129,7 @@ source_group(include FILES ${INC})
 
 ############################################################
 set(INC_DETAILS
-    ${PINC}/details/multiWaiter.hpp
+    ${PINC}/details/waiter.hpp
 )
 source_group(include/details FILES ${INC_DETAILS})
 
@@ -143,7 +143,7 @@ set(INC_IMPL
     ${PSRC}/impl/contextEngine.hpp
     ${PSRC}/impl/event.hpp
     ${PSRC}/impl/mutex.hpp
-    ${PSRC}/impl/multiWaiter.hpp
+    ${PSRC}/impl/waiter.hpp
     ${PSRC}/impl/synchronizer.hpp
 )
 source_group(include/impl FILES ${INC_IMPL})
@@ -162,7 +162,7 @@ source_group(src FILES ${SRC})
 
 ############################################################
 set(SRC_DETAILS
-    ${PSRC}/details/multiWaiter.cpp
+    ${PSRC}/details/waiter.cpp
 )
 source_group(src/details FILES ${SRC_DETAILS})
 
@@ -176,7 +176,7 @@ set(SRC_IMPL
     ${PSRC}/impl/contextEngine.cpp
     ${PSRC}/impl/event.cpp
     ${PSRC}/impl/mutex.cpp
-    ${PSRC}/impl/multiWaiter.cpp
+    ${PSRC}/impl/waiter.cpp
     ${PSRC}/impl/synchronizer.cpp
     ${PSRC}/impl/sizeofImplGen.cpp
 )
@@ -231,7 +231,7 @@ add_custom_command(OUTPUT ${PINC}/sizeofImpl.hpp
                         ${PSRC}/impl/scheduler.hpp
                         ${PSRC}/impl/event.hpp
                         ${PSRC}/impl/mutex.hpp
-                        ${PSRC}/impl/multiWaiter.hpp
+                        ${PSRC}/impl/waiter.hpp
                     VERBATIM)
                     
 #set_source_files_properties(

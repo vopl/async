@@ -25,8 +25,8 @@ namespace async { namespace impl
         void unlock();
 
     private:
-        virtual bool waiterAdd(MultiWaiter *waiter) override;
-        virtual void waiterDel(MultiWaiter *waiter) override;
+        virtual bool waiterAdd(Waiter *waiter) override;
+        virtual void waiterDel(Waiter *waiter) override;
 
     private:
         enum class State
@@ -40,12 +40,12 @@ namespace async { namespace impl
 
         std::atomic<State> _state;
 
-        typedef std::vector<MultiWaiter *> TVWaiters;
+        typedef std::vector<Waiter *> TVWaiters;
         TVWaiters _waiters;
 
 //Syncronizer
 //        std::mutex _mtx;
-//        std::deque<MultiWaiter *> _waiters;
+//        std::deque<Waiter *> _waiters;
 
     };
 }}

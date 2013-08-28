@@ -1,5 +1,5 @@
-#ifndef _ASYNC_IMPL_MULTIWAITER_HPP_
-#define _ASYNC_IMPL_MULTIWAITER_HPP_
+#ifndef _ASYNC_IMPL_WAITER_HPP_
+#define _ASYNC_IMPL_WAITER_HPP_
 
 #include <memory>
 #include <mutex>
@@ -21,17 +21,17 @@ namespace async { namespace impl
 
     class Coro;
 
-    class MultiWaiter
+    class Waiter
     {
     public:
-        MultiWaiter(Synchronizer **synchronizersBuffer);
-        MultiWaiter(Synchronizer **synchronizersBuffer, uint32_t synchronizersAmount);
-        ~MultiWaiter();
+        Waiter(Synchronizer **synchronizersBuffer);
+        Waiter(Synchronizer **synchronizersBuffer, uint32_t synchronizersAmount);
+        ~Waiter();
 
         void push(Synchronizer *synchronizer);
 
-        uint32_t waitAny();
-        void waitAll();
+        uint32_t any();
+        void all();
 
         Coro *getCoro();
 

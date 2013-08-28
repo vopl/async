@@ -8,7 +8,7 @@ namespace async
 {
     namespace details
     {
-        class MultiWaiter;
+        class Waiter;
     }
 
     class Event
@@ -32,7 +32,7 @@ namespace async
         bool reset();
 
     private:
-        friend class details::MultiWaiter;
+        friend class details::Waiter;
     };
 }
 

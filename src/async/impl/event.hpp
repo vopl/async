@@ -26,8 +26,8 @@ namespace async { namespace impl
         bool reset();
 
     private:
-        virtual bool waiterAdd(MultiWaiter *waiter) override;
-        virtual void waiterDel(MultiWaiter *waiter) override {assert(0);}
+        virtual bool waiterAdd(Waiter *waiter) override;
+        virtual void waiterDel(Waiter *waiter) override {assert(0);}
         size_t waitersAmount() {assert(0);return 0;}
         bool notifyOne() {assert(0); return false;}
         size_t notifyAll() {assert(0); return 0;}
@@ -39,7 +39,7 @@ namespace async { namespace impl
 
 //Syncronizer
 //        std::mutex _mtx;
-//        std::deque<MultiWaiter *> _waiters;
+//        std::deque<Waiter *> _waiters;
 
     };
 }}

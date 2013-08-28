@@ -1,5 +1,5 @@
-#ifndef _ASYNC_DETAILS_MULTIWAITER_HPP_
-#define _ASYNC_DETAILS_MULTIWAITER_HPP_
+#ifndef _ASYNC_DETAILS_WAITER_HPP_
+#define _ASYNC_DETAILS_WAITER_HPP_
 
 #include "async/sizeofImpl.hpp"
 #include "async/hiddenImpl.hpp"
@@ -18,21 +18,21 @@ namespace async
 
     namespace details
     {
-        class MultiWaiter
-                : private HiddenImpl<impl::MultiWaiter>
+        class Waiter
+                : private HiddenImpl<impl::Waiter>
         {
-            using Base = HiddenImpl<impl::MultiWaiter>;
+            using Base = HiddenImpl<impl::Waiter>;
 
         private:
-            MultiWaiter(const MultiWaiter &other) = delete;
-            MultiWaiter &operator=(const MultiWaiter &other) = delete;
+            Waiter(const Waiter &other) = delete;
+            Waiter &operator=(const Waiter &other) = delete;
 
         public:
-            MultiWaiter(impl::Synchronizer **synchronizersBuffer);
-            ~MultiWaiter();
+            Waiter(impl::Synchronizer **synchronizersBuffer);
+            ~Waiter();
 
-            uint32_t waitAny();
-            void waitAll();
+            uint32_t any();
+            void all();
 
             template <class... Waitable>
             void collectWaitables(Mutex &mutex, Waitable &... waitables);
@@ -50,14 +50,14 @@ namespace async
 
 
         //////////////////////////////////////////////////
-        inline void MultiWaiter::collectWaitables()
+        inline void Waiter::collectWaitables()
         {
             //empty ok
         }
 
         //////////////////////////////////////////////////
         template <class... Waitable>
-        void MultiWaiter::collectWaitables(Mutex &mutex, Waitable&... waitables)
+        void Waiter::collectWaitables(Mutex &mutex, Waitable&... waitables)
         {
             push(mutex);
             collectWaitables(waitables...);
@@ -65,7 +65,7 @@ namespace async
 
         //////////////////////////////////////////////////
         template <class... Waitable>
-        void MultiWaiter::collectWaitables(Event &event, Waitable&... waitables)
+        void Waiter::collectWaitables(Event &event, Waitable&... waitables)
         {
             push(event);
             collectWaitables(waitables...);

@@ -1,7 +1,7 @@
 #ifndef _ASYNC_WAIT_HPP_
 #define _ASYNC_WAIT_HPP_
 
-#include "async/details/multiWaiter.hpp"
+#include "async/details/waiter.hpp"
 
 namespace async
 {
@@ -10,10 +10,10 @@ namespace async
     uint32_t waitAny(Waitable &... waitables)
     {
         impl::Synchronizer *synchronizersBuffer[sizeof...(waitables)];
-        details::MultiWaiter multiWaiter(synchronizersBuffer);
-        multiWaiter.collectWaitables(waitables...);
+        details::Waiter waiter(synchronizersBuffer);
+        waiter.collectWaitables(waitables...);
 
-        return multiWaiter.waitAny();
+        return waiter.any();
     }
 
 }

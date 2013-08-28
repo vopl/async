@@ -1,4 +1,4 @@
-#include "async/impl/multiWaiter.hpp"
+#include "async/impl/waiter.hpp"
 #include "async/event.hpp"
 #include "async/mutex.hpp"
 #include "async/impl/event.hpp"
@@ -12,7 +12,7 @@
 
 namespace async { namespace impl
 {
-    MultiWaiter::MultiWaiter(Synchronizer **synchronizersBuffer)
+    Waiter::Waiter(Synchronizer **synchronizersBuffer)
         : _state(markActive)
         , _synchronizersBuffer(synchronizersBuffer)
         , _synchronizersAmount(0)
@@ -21,7 +21,7 @@ namespace async { namespace impl
 
     }
 
-    MultiWaiter::MultiWaiter(Synchronizer **synchronizersBuffer, uint32_t synchronizersAmount)
+    Waiter::Waiter(Synchronizer **synchronizersBuffer, uint32_t synchronizersAmount)
         : _state(markActive)
         , _synchronizersBuffer(synchronizersBuffer)
         , _synchronizersAmount(synchronizersAmount)
@@ -30,17 +30,17 @@ namespace async { namespace impl
 
     }
 
-    MultiWaiter::~MultiWaiter()
+    Waiter::~Waiter()
     {
     }
 
 
-    void MultiWaiter::push(Synchronizer *synchronizer)
+    void Waiter::push(Synchronizer *synchronizer)
     {
         _synchronizersBuffer[_synchronizersAmount++] = synchronizer;
     }
 
-    uint32_t MultiWaiter::waitAny()
+    uint32_t Waiter::any()
     {
         //LOCK std::unique_lock<std::mutex> l(_mtx);
 
@@ -117,12 +117,12 @@ namespace async { namespace impl
         return _state.load();
     }
 
-    Coro *MultiWaiter::getCoro()
+    Coro *Waiter::getCoro()
     {
         return _coro;
     }
 
-    bool MultiWaiter::notify(Synchronizer *notifier, bool guaranteeNonInactive)
+    bool Waiter::notify(Synchronizer *notifier, bool guaranteeNonInactive)
     {
         bool coroActive;
         if(guaranteeNonInactive)

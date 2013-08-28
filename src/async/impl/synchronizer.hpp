@@ -9,14 +9,14 @@ namespace async { namespace impl
 {
     class Coro;
 
-    class MultiWaiter;
+    class Waiter;
 
     ////////////////////////////////////////////////////////////////////////////////
     class Synchronizer
     {
     public:
-        virtual bool waiterAdd(MultiWaiter *waiter) = 0;
-        virtual void waiterDel(MultiWaiter *waiter) = 0;
+        virtual bool waiterAdd(Waiter *waiter) = 0;
+        virtual void waiterDel(Waiter *waiter) = 0;
     };
 }}
 

@@ -1,6 +1,6 @@
 #include "async/impl/mutex.hpp"
 #include "async/impl/coro.hpp"
-#include "async/impl/multiWaiter.hpp"
+#include "async/impl/waiter.hpp"
 
 #include <thread>
 #include <cassert>
@@ -26,9 +26,9 @@ namespace async { namespace impl
         }
 
         Synchronizer *synchronizersBuffer[1] = {this};
-        MultiWaiter multiWaiter(synchronizersBuffer, 1);
+        Waiter waiter(synchronizersBuffer, 1);
 
-        uint32_t waiterResult = multiWaiter.waitAny();
+        uint32_t waiterResult = waiter.any();
 
         (void)waiterResult;
         assert(0 == waiterResult);
@@ -86,7 +86,7 @@ namespace async { namespace impl
 
                 for(; iter != end; ++iter)
                 {
-                    MultiWaiter *waiter = *iter;
+                    Waiter *waiter = *iter;
                     if(waiter->notify(this, false))
                     {
                         ++iter;
@@ -128,7 +128,7 @@ namespace async { namespace impl
         }
     }
 
-    bool Mutex::waiterAdd(MultiWaiter *waiter)
+    bool Mutex::waiterAdd(Waiter *waiter)
     {
 //        std::cout<<"waiterAdd\n"; std::cout.flush();
         for(;;)
@@ -191,7 +191,7 @@ namespace async { namespace impl
         return false;
     }
 
-    void Mutex::waiterDel(MultiWaiter *waiter)
+    void Mutex::waiterDel(Waiter *waiter)
     {
 //        std::cout<<"waiteDel\n"; std::cout.flush();
         State was;
@@ -233,7 +233,7 @@ namespace async { namespace impl
         }
         //note, original lock state preserved in _was_
 
-        for(std::vector<MultiWaiter *>::iterator iter(_waiters.begin()), end(_waiters.end()); iter != end; ++iter)
+        for(std::vector<Waiter *>::iterator iter(_waiters.begin()), end(_waiters.end()); iter != end; ++iter)
         {
             if(waiter == *iter)
             {
