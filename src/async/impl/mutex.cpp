@@ -75,7 +75,7 @@ namespace async { namespace impl
                 if(_waiters.empty())
                 {
                     //nobody
-                    _state.exchange(State::unlocked);
+                    _state.store(State::unlocked);
 //                    std::cout<<"unlock make unlocked\n"; std::cout.flush();
                     return;
                 }
@@ -93,7 +93,7 @@ namespace async { namespace impl
 
                         //some one notified successfully
                         _waiters.erase(_waiters.begin(), iter);
-                        _state.exchange(State::locked);
+                        _state.store(State::locked);
 //                        std::cout<<"unlock make locked\n"; std::cout.flush();
                         return;
                     }
@@ -101,7 +101,7 @@ namespace async { namespace impl
 
                 //no one
                 _waiters.clear();
-                _state.exchange(State::unlocked);
+                _state.store(State::unlocked);
 //                std::cout<<"unlock make unlocked because nobody\n"; std::cout.flush();
                 return;
             }
@@ -141,13 +141,13 @@ namespace async { namespace impl
                 if(waiter->notify(this, true))
                 {
                     //waiter notified successfully, his come locker
-                    _state.exchange(State::locked);
+                    _state.store(State::locked);
 //                    std::cout<<"waiteAdd, make locked\n"; std::cout.flush();
                 }
                 else
                 {
                     //waiter already notified by 3rd side
-                    _state.exchange(State::unlocked);
+                    _state.store(State::unlocked);
 //                    std::cout<<"waiteAdd, make unlocked\n"; std::cout.flush();
                 }
                 return false;
@@ -174,7 +174,7 @@ namespace async { namespace impl
                     _waiters.push_back(waiter);
 
                     //keep locked for over waiter
-                    _state.exchange(State::locked);
+                    _state.store(State::locked);
 //                    std::cout<<"waiteAdd, make locked\n"; std::cout.flush();
                     return true;
                 }
@@ -244,7 +244,7 @@ namespace async { namespace impl
 
         assert(State::busy == _state.load());
         assert(State::busy != was);
-        _state.exchange(was);
+        _state.store(was);
 //        std::cout<<"waiteDel, restore old\n"; std::cout.flush();
     }
 

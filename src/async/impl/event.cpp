@@ -49,7 +49,7 @@ namespace async { namespace impl
                 if(_waiters.empty())
                 {
                     //nobody, keep signalled
-                    _state.exchange(State::signalled);
+                    _state.store(State::signalled);
                     return 0;
                 }
 
@@ -69,14 +69,14 @@ namespace async { namespace impl
 
                             //some one notified successfully
                             _waiters.erase(_waiters.begin(), iter);
-                            _state.exchange(State::nonsignalled);
+                            _state.store(State::nonsignalled);
                             return 1;
                         }
                     }
 
                     //no one
                     _waiters.clear();
-                    _state.exchange(State::signalled);
+                    _state.store(State::signalled);
                     return 0;
                 }
 
@@ -93,7 +93,7 @@ namespace async { namespace impl
 
                 //all notified
                 _waiters.clear();
-                _state.exchange(State::signalled);
+                _state.store(State::signalled);
                 return notifiedAmount;
             }
 
@@ -131,7 +131,7 @@ namespace async { namespace impl
                 if(_waiters.empty())
                 {
                     //nobody, keep nonsignalled
-                    _state.exchange(State::nonsignalled);
+                    _state.store(State::nonsignalled);
                     return 0;
                 }
 
@@ -151,14 +151,14 @@ namespace async { namespace impl
 
                             //some one notified successfully
                             _waiters.erase(_waiters.begin(), iter);
-                            _state.exchange(State::nonsignalled);
+                            _state.store(State::nonsignalled);
                             return 1;
                         }
                     }
 
                     //no one
                     _waiters.clear();
-                    _state.exchange(State::nonsignalled);
+                    _state.store(State::nonsignalled);
                     return 0;
                 }
 
@@ -175,7 +175,7 @@ namespace async { namespace impl
 
                 //all notified
                 _waiters.clear();
-                _state.exchange(State::nonsignalled);
+                _state.store(State::nonsignalled);
                 return notifiedAmount;
             }
 
@@ -253,12 +253,12 @@ namespace async { namespace impl
                 assert(_waiters.empty());
                 if(waiter->notify(this, true))
                 {
-                    _state.exchange(_autoReset ? State::nonsignalled : State::signalled);
+                    _state.store(_autoReset ? State::nonsignalled : State::signalled);
                 }
                 else
                 {
                     //waiter already notified by 3rd side, keep signalled state
-                    _state.exchange(State::signalled);
+                    _state.store(State::signalled);
                 }
                 return false;
             }
@@ -279,7 +279,7 @@ namespace async { namespace impl
                     _waiters.push_back(waiter);
 
                     //keep locked for over waiter
-                    _state.exchange(State::nonsignalled);
+                    _state.store(State::nonsignalled);
                     return true;
                 }
 
@@ -346,7 +346,7 @@ namespace async { namespace impl
 
         assert(State::busy == _state.load());
         assert(State::busy != was);
-        _state.exchange(was);
+        _state.store(was);
     }
 
 
