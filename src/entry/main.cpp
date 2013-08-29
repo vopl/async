@@ -52,28 +52,26 @@ int main()
         async::Event event0(true);
         async::Event event1(true);
         async::Event event2(true);
-        async::Event event3(true);
 
         event0.set();
         event1.set();
         event2.set();
-        event3.set();
 
-#define TXTMAKE 1
+#define TXTMAKE 0
 #define TXTOUT 0
         for(size_t i(0); i<amount; i++)
         {
             //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            ////std::this_thread::yield();
+            //std::this_thread::yield();
 
-            cm.spawn([i, mult, &cnt, &event0, &event1, &event2, &event3]{
+            cm.spawn([i, mult, &cnt, &event0, &event1, &event2]{
 
                 for(size_t m(0); m<mult; m++)
                 {
                     size_t k = i*mult+m;
                     if(0 == (k%4))
                     {
-                        uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
+                        uint32_t mtxIndex = async::waitAny(event0, event1, event2);
                         int v = cnt.fetch_add(1);
                         (void)v;
 #if TXTMAKE
@@ -94,9 +92,6 @@ int main()
                             break;
                         case 2:
                             event2.set();
-                            break;
-                        case 3:
-                            event3.set();
                             break;
                         default:
                             assert(0);
@@ -104,7 +99,7 @@ int main()
                     }
                     else if(1 == (k%4))
                     {
-                        uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
+                        uint32_t mtxIndex = async::waitAny(event0, event1, event2);
                         int v = cnt.fetch_add(1);
                         (void)v;
 #if TXTMAKE
@@ -125,9 +120,6 @@ int main()
                             break;
                         case 2:
                             event2.set();
-                            break;
-                        case 3:
-                            event3.set();
                             break;
                         default:
                             assert(0);
@@ -135,7 +127,7 @@ int main()
                     }
                     else if(2 == (k%4))
                     {
-                        uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
+                        uint32_t mtxIndex = async::waitAny(event0, event1, event2);
                         int v = cnt.fetch_add(1);
                         (void)v;
 #if TXTMAKE
@@ -156,9 +148,6 @@ int main()
                             break;
                         case 2:
                             event2.set();
-                            break;
-                        case 3:
-                            event3.set();
                             break;
                         default:
                             assert(0);
@@ -166,7 +155,7 @@ int main()
                     }
                     else if(3 == (k%4))
                     {
-                        uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
+                        uint32_t mtxIndex = async::waitAny(event0, event1, event2);
                         int v = cnt.fetch_add(1);
                         (void)v;
 #if TXTMAKE
@@ -187,9 +176,6 @@ int main()
                             break;
                         case 2:
                             event2.set();
-                            break;
-                        case 3:
-                            event3.set();
                             break;
                         default:
                             assert(0);
@@ -201,6 +187,7 @@ int main()
 
         while(cnt < amount*mult)
         {
+            std::cout<<"sleep"<<std::endl;
             std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
 

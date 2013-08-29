@@ -54,25 +54,26 @@ namespace async { namespace impl
                 }
 
                 //notify waiters by queue, depend on autoReset
-                TVWaiters::iterator iter(_waiters.begin());
-                TVWaiters::iterator end(_waiters.end());
-
                 if(_autoReset)
                 {
-                    //notify only first
-                    for(; iter != end; ++iter)
+                    //notify only one
+
+                    TVWaiters::iterator begin(_waiters.begin());
+                    TVWaiters::iterator iter(_waiters.end());
+
+                    do
                     {
+                        --iter;
                         Waiter *waiter = *iter;
                         if(waiter->notify(this, false))
                         {
-                            ++iter;
-
                             //some one notified successfully
-                            _waiters.erase(_waiters.begin(), iter);
+                            _waiters.resize(iter-begin);
                             _state.store(State::nonsignalled);
                             return 1;
                         }
                     }
+                    while(begin != iter);
 
                     //no one
                     _waiters.clear();
@@ -82,9 +83,8 @@ namespace async { namespace impl
 
                 //notify all
                 size_t notifiedAmount(0);
-                for(; iter != end; ++iter)
+                for(Waiter *waiter: _waiters)
                 {
-                    Waiter *waiter = *iter;
                     if(waiter->notify(this, false))
                     {
                         ++notifiedAmount;
@@ -107,7 +107,7 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                //std::this_thread::yield();
+                std::this_thread::yield();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -136,25 +136,26 @@ namespace async { namespace impl
                 }
 
                 //notify waiters by queue, depend on autoReset
-                TVWaiters::iterator iter(_waiters.begin());
-                TVWaiters::iterator end(_waiters.end());
-
                 if(_autoReset)
                 {
-                    //notify only first
-                    for(; iter != end; ++iter)
+                    //notify only one
+
+                    TVWaiters::iterator begin(_waiters.begin());
+                    TVWaiters::iterator iter(_waiters.end());
+
+                    do
                     {
+                        --iter;
                         Waiter *waiter = *iter;
                         if(waiter->notify(this, false))
                         {
-                            ++iter;
-
                             //some one notified successfully
-                            _waiters.erase(_waiters.begin(), iter);
+                            _waiters.resize(iter-begin);
                             _state.store(State::nonsignalled);
                             return 1;
                         }
                     }
+                    while(begin != iter);
 
                     //no one
                     _waiters.clear();
@@ -164,9 +165,8 @@ namespace async { namespace impl
 
                 //notify all
                 size_t notifiedAmount(0);
-                for(; iter != end; ++iter)
+                for(Waiter *waiter: _waiters)
                 {
-                    Waiter *waiter = *iter;
                     if(waiter->notify(this, false))
                     {
                         ++notifiedAmount;
@@ -174,6 +174,7 @@ namespace async { namespace impl
                 }
 
                 //all notified
+
                 _waiters.clear();
                 _state.store(State::nonsignalled);
                 return notifiedAmount;
@@ -189,7 +190,7 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                //std::this_thread::yield();
+                std::this_thread::yield();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -291,7 +292,7 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                //std::this_thread::yield();
+                std::this_thread::yield();
                 continue;
             case State::nonsignalled:
                 //already locked by over waiter, put to waiters queue
@@ -329,16 +330,16 @@ namespace async { namespace impl
                 break;
             }
 
-            if(State::nonsignalled == was)
-            {
-                //spuriout failure in CAS, try one more
-                continue;
-            }
-
             if(State::busy == was)
             {
                 //busy by 3rd side, wait
-                //std::this_thread::yield();
+                std::this_thread::yield();
+                continue;
+            }
+
+            if(State::nonsignalled == was)
+            {
+                //spurious failure in CAS, try one more
                 continue;
             }
 
@@ -360,7 +361,14 @@ namespace async { namespace impl
         {
             if(waiter == *iter)
             {
-                _waiters.erase(iter);
+                std::vector<Waiter *>::iterator preEnd = end-1;
+
+                if(iter != preEnd)
+                {
+                    *iter = *preEnd;
+                }
+
+                _waiters.pop_back();
                 break;
             }
         }

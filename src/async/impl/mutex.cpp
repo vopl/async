@@ -119,7 +119,7 @@ namespace async { namespace impl
             case State::busy:
 //                std::cout<<"unlock unable busy, busy\n"; std::cout.flush();
                 //over thread make changes, wait
-                //std::this_thread::yield();
+                std::this_thread::yield();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -163,7 +163,7 @@ namespace async { namespace impl
             case State::busy:
 //                std::cout<<"waiteAdd, unable busy, busy\n"; std::cout.flush();
                 //over thread make changes, wait
-                //std::this_thread::yield();
+                std::this_thread::yield();
                 continue;
             case State::locked:
 //                std::cout<<"waiteAdd, unable busy, locked\n"; std::cout.flush();
@@ -209,14 +209,14 @@ namespace async { namespace impl
             if(State::unlocked == was)
             {
 //                std::cout<<"waiteDel, unable busy, unlocked\n"; std::cout.flush();
-                //spuriout failure in CAS, try one more
+                //spurious failure in CAS, try one more
                 continue;
             }
 
             if(State::busy == was)
             {
 //                std::cout<<"waiteDel, unable busy, busy\n"; std::cout.flush();
-                //std::this_thread::yield();
+                std::this_thread::yield();
                 continue;
             }
 
