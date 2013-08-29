@@ -12,9 +12,9 @@
 #include <mutex>
 #include <atomic>
 
-//#if defined(HAVE_VALGRIND)
-//#   define USE_VALGRIND
-//#endif
+#if defined(HAVE_VALGRIND)
+#   define USE_VALGRIND
+#endif
 
 namespace async { namespace impl
 {
