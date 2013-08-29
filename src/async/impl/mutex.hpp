@@ -25,6 +25,7 @@ namespace async { namespace impl
         void unlock();
 
     private:
+        virtual bool tryAcquire(Waiter *waiter) override;
         virtual bool waiterAdd(Waiter *waiter) override;
         virtual void waiterDel(Waiter *waiter) override;
 

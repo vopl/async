@@ -243,6 +243,27 @@ namespace async { namespace impl
         return false;
     }
 
+    bool Event::tryAcquire(Waiter *waiter)
+    {
+        if(_autoReset)
+        {
+            State was = State::signalled;
+            if(_state.compare_exchange_strong(was, State::nonsignalled))
+            {
+                return true;
+            }
+        }
+        else
+        {
+            if(State::signalled == _state.load())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     bool Event::waiterAdd(Waiter *waiter)
     {
         for(;;)
@@ -286,7 +307,7 @@ namespace async { namespace impl
                 //waiter is not queued yet, try one more
                 continue;
             default:
-                assert(!"unknown mutex state");
+                assert(!"unknown event state");
                 break;
             }
         }

@@ -48,7 +48,7 @@ int main()
 
         std::atomic<size_t> cnt(0);
         size_t amount = 300;
-        size_t mult = 30*1000;
+        size_t mult = 300*1000;
         async::Event event0(true);
         async::Event event1(true);
         async::Event event2(true);

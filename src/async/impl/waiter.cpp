@@ -47,6 +47,25 @@ namespace async { namespace impl
         _coro = Coro::current();
         assert(_coro);
 
+        static __thread uint32_t seed = 0;
+        seed = seed * 1103515245 + (uint32_t)(intptr_t)_coro;
+        uint32_t offset = (seed>>16) % _synchronizersAmount;
+
+        for(uint32_t idxTry(offset); idxTry<_synchronizersAmount; idxTry++)
+        {
+            if(_synchronizersBuffer[idxTry]->tryAcquire(this))
+            {
+                return idxTry;
+            }
+        }
+        for(uint32_t idxTry(0); idxTry<offset; idxTry++)
+        {
+            if(_synchronizersBuffer[idxTry]->tryAcquire(this))
+            {
+                return idxTry;
+            }
+        }
+
         for(uint32_t idxAdd(0); idxAdd<_synchronizersAmount; idxAdd++)
         {
             if(!_synchronizersBuffer[idxAdd]->waiterAdd(this))

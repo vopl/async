@@ -28,6 +28,7 @@ namespace async { namespace impl
         bool reset();
 
     private:
+        virtual bool tryAcquire(Waiter *waiter) override;
         virtual bool waiterAdd(Waiter *waiter) override;
         virtual void waiterDel(Waiter *waiter) override;
 
