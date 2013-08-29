@@ -53,14 +53,15 @@ namespace async { namespace impl
 
         for(uint32_t idxTry(offset); idxTry<_synchronizersAmount; idxTry++)
         {
-            if(_synchronizersBuffer[idxTry]->tryAcquire(this))
+            if(_synchronizersBuffer[idxTry]->tryAcquire())
             {
                 return idxTry;
             }
         }
+
         for(uint32_t idxTry(0); idxTry<offset; idxTry++)
         {
-            if(_synchronizersBuffer[idxTry]->tryAcquire(this))
+            if(_synchronizersBuffer[idxTry]->tryAcquire())
             {
                 return idxTry;
             }
@@ -78,7 +79,7 @@ namespace async { namespace impl
                 uint32_t notified = _state.load();
                 while(notified == markPreNotified)
                 {
-                    std::this_thread::yield();
+                    //std::this_thread::yield();
                     notified = _state.load();
                 }
                 assert(notified < 1024);//1024 - maximum Syncronizers in progress for this waiter instance
@@ -108,7 +109,7 @@ namespace async { namespace impl
                 continue;
             case markPreNotified:
                 //some Syncronizer fired but not complete interactions, await
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             case markDeactivating:
             case markInactive:
@@ -200,7 +201,7 @@ namespace async { namespace impl
                 case markDeactivating:
                     //context deactivating in progress, await inactive state
                     wasState = markInactive;
-                    std::this_thread::yield();
+                    //std::this_thread::yield();
                     break;
                 case markInactive:
                     //context deactivated, try from inactive state

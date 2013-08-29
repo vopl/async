@@ -48,7 +48,7 @@ int main()
 
         std::atomic<size_t> cnt(0);
         size_t amount = 300;
-        size_t mult = 300*1000;
+        size_t mult = 30*1000;
         async::Event event0(true);
         async::Event event1(true);
         async::Event event2(true);
@@ -59,11 +59,12 @@ int main()
         event2.set();
         event3.set();
 
+#define TXTMAKE 1
 #define TXTOUT 0
         for(size_t i(0); i<amount; i++)
         {
             //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            //std::this_thread::yield();
+            ////std::this_thread::yield();
 
             cm.spawn([i, mult, &cnt, &event0, &event1, &event2, &event3]{
 
@@ -75,11 +76,13 @@ int main()
                         uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
                         int v = cnt.fetch_add(1);
                         (void)v;
-#if TXTOUT
+#if TXTMAKE
                         char tmp[32];
                         (void)tmp;
                         sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
+#if TXTOUT
                         std::cout<<tmp; std::cout.flush();
+#endif
 #endif
                         switch(mtxIndex)
                         {
@@ -104,11 +107,13 @@ int main()
                         uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
                         int v = cnt.fetch_add(1);
                         (void)v;
-#if TXTOUT
+#if TXTMAKE
                         char tmp[32];
                         (void)tmp;
                         sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
+#if TXTOUT
                         std::cout<<tmp; std::cout.flush();
+#endif
 #endif
                         switch(mtxIndex)
                         {
@@ -133,11 +138,13 @@ int main()
                         uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
                         int v = cnt.fetch_add(1);
                         (void)v;
-#if TXTOUT
+#if TXTMAKE
                         char tmp[32];
                         (void)tmp;
                         sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
+#if TXTOUT
                         std::cout<<tmp; std::cout.flush();
+#endif
 #endif
                         switch(mtxIndex)
                         {
@@ -162,11 +169,13 @@ int main()
                         uint32_t mtxIndex = async::waitAny(event0, event1, event2, event3);
                         int v = cnt.fetch_add(1);
                         (void)v;
-#if TXTOUT
+#if TXTMAKE
                         char tmp[32];
                         (void)tmp;
                         sprintf(tmp, "%d, in %d locked %d\n", v, (int)(k%4), mtxIndex);
+#if TXTOUT
                         std::cout<<tmp; std::cout.flush();
+#endif
 #endif
                         switch(mtxIndex)
                         {

@@ -15,7 +15,7 @@ namespace async { namespace impl
     class Synchronizer
     {
     public:
-        virtual bool tryAcquire(Waiter *waiter) = 0;
+        virtual bool tryAcquire() = 0;
         virtual bool waiterAdd(Waiter *waiter) = 0;
         virtual void waiterDel(Waiter *waiter) = 0;
     };

@@ -107,7 +107,7 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -189,7 +189,7 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -243,7 +243,7 @@ namespace async { namespace impl
         return false;
     }
 
-    bool Event::tryAcquire(Waiter *waiter)
+    bool Event::tryAcquire()
     {
         if(_autoReset)
         {
@@ -291,7 +291,7 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             case State::nonsignalled:
                 //already locked by over waiter, put to waiters queue
@@ -338,7 +338,7 @@ namespace async { namespace impl
             if(State::busy == was)
             {
                 //busy by 3rd side, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             }
 
