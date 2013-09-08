@@ -5,6 +5,7 @@
 #include "async/impl/mutex.hpp"
 #include "async/impl/coro.hpp"
 #include "async/impl/scheduler.hpp"
+#include "async/impl/synchronizerWaiterNode.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -12,22 +13,26 @@
 
 namespace async { namespace impl
 {
-    Waiter::Waiter(Synchronizer **synchronizersBuffer)
+    Waiter::Waiter(impl::SynchronizerWaiterNode *synchronizerWaiterNodes)
         : _state(markActive)
-        , _synchronizersBuffer(synchronizersBuffer)
-        , _synchronizersAmount(0)
+        , _synchronizerWaiterNodes(synchronizerWaiterNodes)
+        , _synchronizerWaiterNodesAmount(0)
         , _coro()
     {
 
     }
 
-    Waiter::Waiter(Synchronizer **synchronizersBuffer, uint32_t synchronizersAmount)
+    Waiter::Waiter(impl::SynchronizerWaiterNode *synchronizerWaiterNodes, uint32_t synchronizerWaiterNodesAmount)
         : _state(markActive)
-        , _synchronizersBuffer(synchronizersBuffer)
-        , _synchronizersAmount(synchronizersAmount)
+        , _synchronizerWaiterNodes(synchronizerWaiterNodes)
+        , _synchronizerWaiterNodesAmount(synchronizerWaiterNodesAmount)
         , _coro()
     {
-
+        for(uint32_t i(0); i<_synchronizerWaiterNodesAmount; i++)
+        {
+            _synchronizerWaiterNodes[i]._waiter = this;
+            _synchronizerWaiterNodes[i]._synchronizerIndex = i;
+        }
     }
 
     Waiter::~Waiter()
@@ -37,7 +42,12 @@ namespace async { namespace impl
 
     void Waiter::push(Synchronizer *synchronizer)
     {
-        _synchronizersBuffer[_synchronizersAmount++] = synchronizer;
+        impl::SynchronizerWaiterNode &node = _synchronizerWaiterNodes[_synchronizerWaiterNodesAmount];
+        node._syncronizer = synchronizer;
+        node._waiter = this;
+        node._synchronizerIndex = _synchronizerWaiterNodesAmount;
+
+        ++_synchronizerWaiterNodesAmount;
     }
 
     uint32_t Waiter::any()
@@ -49,11 +59,11 @@ namespace async { namespace impl
 
         static __thread uint32_t seed = 0;
         seed = seed * 1103515245 + (uint32_t)(intptr_t)_coro;
-        uint32_t offset = (seed>>16) % _synchronizersAmount;
+        uint32_t offset = (seed>>16) % _synchronizerWaiterNodesAmount;
 
-        for(uint32_t idxTry(offset); idxTry<_synchronizersAmount; idxTry++)
+        for(uint32_t idxTry(offset); idxTry<_synchronizerWaiterNodesAmount; idxTry++)
         {
-            if(_synchronizersBuffer[idxTry]->tryAcquire())
+            if(_synchronizerWaiterNodes[idxTry]._syncronizer->tryAcquire())
             {
                 return idxTry;
             }
@@ -61,25 +71,25 @@ namespace async { namespace impl
 
         for(uint32_t idxTry(0); idxTry<offset; idxTry++)
         {
-            if(_synchronizersBuffer[idxTry]->tryAcquire())
+            if(_synchronizerWaiterNodes[idxTry]._syncronizer->tryAcquire())
             {
                 return idxTry;
             }
         }
 
-        for(uint32_t idxAdd(0); idxAdd<_synchronizersAmount; idxAdd++)
+        for(uint32_t idxAdd(0); idxAdd<_synchronizerWaiterNodesAmount; idxAdd++)
         {
-            if(!_synchronizersBuffer[idxAdd]->waiterAdd(this))
+            if(!_synchronizerWaiterNodes[idxAdd]._syncronizer->waiterAdd(_synchronizerWaiterNodes[idxAdd]))
             {
                 for(uint32_t idxDel(0); idxDel<idxAdd; idxDel++)
                 {
-                    _synchronizersBuffer[idxDel]->waiterDel(this);
+                    _synchronizerWaiterNodes[idxDel]._syncronizer->waiterDel(_synchronizerWaiterNodes[idxDel]);
                 }
 
                 uint32_t notified = _state.load();
                 while(notified == markPreNotified)
                 {
-                    std::this_thread::yield();
+                    //std::this_thread::yield();
                     notified = _state.load();
                 }
                 assert(notified < 1024);//1024 - maximum Syncronizers in progress for this waiter instance
@@ -109,7 +119,7 @@ namespace async { namespace impl
                 continue;
             case markPreNotified:
                 //some Syncronizer fired but not complete interactions, await
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             case markDeactivating:
             case markInactive:
@@ -127,11 +137,11 @@ namespace async { namespace impl
 
 
 
-        assert(_state.load() < _synchronizersAmount);
+        assert(_state.load() < _synchronizerWaiterNodesAmount);
 
-        for(uint32_t i(0); i<_synchronizersAmount; i++)
+        for(uint32_t i(0); i<_synchronizerWaiterNodesAmount; i++)
         {
-            _synchronizersBuffer[i]->waiterDel(this);
+            _synchronizerWaiterNodes[i]._syncronizer->waiterDel(_synchronizerWaiterNodes[i]);
         }
 
         return _state.load();
@@ -142,8 +152,10 @@ namespace async { namespace impl
         return _coro;
     }
 
-    bool Waiter::notify(Synchronizer *notifier, bool guaranteeNonInactive)
+    bool Waiter::notify(impl::SynchronizerWaiterNode &node, bool guaranteeNonInactive)
     {
+        assert(this == node._waiter);
+
         bool coroActive;
         if(guaranteeNonInactive)
         {
@@ -201,7 +213,7 @@ namespace async { namespace impl
                 case markDeactivating:
                     //context deactivating in progress, await inactive state
                     wasState = markInactive;
-                    std::this_thread::yield();
+                    //std::this_thread::yield();
                     break;
                 case markInactive:
                     //context deactivated, try from inactive state
@@ -213,14 +225,7 @@ namespace async { namespace impl
             }
         }
 
-        for(uint32_t i(0); i<_synchronizersAmount; i++)
-        {
-            if(notifier == _synchronizersBuffer[i])
-            {
-                _state.store(i);
-                break;
-            }
-        }
+        _state.store(node._synchronizerIndex);
 
         assert(_coro);
         if(!coroActive)

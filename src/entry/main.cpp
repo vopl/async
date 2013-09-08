@@ -45,15 +45,19 @@ int lmain()
 
     try
     {
-        async::ThreadPool tp(tu, 5);
+        async::ThreadPool tp(tu, 4);
 
         std::atomic<size_t> cnt(0);
-        size_t amount = 10;
+        size_t amount = 100;
         size_t mult = 300*1000;
         async::Event event0(true);
+        char pad0[64];
         async::Event event1(true);
+        char pad1[64];
         async::Event event2(true);
+        char pad2[64];
         async::Event event3(true);
+        char pad3[64];
 
         event0.set();
         event1.set();
@@ -65,7 +69,7 @@ int lmain()
         for(size_t i(0); i<amount; i++)
         {
             //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            //std::this_thread::yield();
+            ////std::this_thread::yield();
 
             cm.spawn([i, mult, &cnt, &event0, &event1, &event2, &event3]{
 

@@ -145,6 +145,7 @@ set(INC_IMPL
     ${PSRC}/impl/mutex.hpp
     ${PSRC}/impl/waiter.hpp
     ${PSRC}/impl/synchronizer.hpp
+    ${PSRC}/impl/synchronizerWaiterNode.hpp
 )
 source_group(include/impl FILES ${INC_IMPL})
 
@@ -232,6 +233,7 @@ add_custom_command(OUTPUT ${PINC}/sizeofImpl.hpp
                         ${PSRC}/impl/event.hpp
                         ${PSRC}/impl/mutex.hpp
                         ${PSRC}/impl/waiter.hpp
+                        ${PSRC}/impl/synchronizerWaiterNode.hpp
                     VERBATIM)
                     
 #set_source_files_properties(

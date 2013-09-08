@@ -1,6 +1,7 @@
 #include "async/impl/mutex.hpp"
 #include "async/impl/coro.hpp"
 #include "async/impl/waiter.hpp"
+#include "async/impl/synchronizerWaiterNode.hpp"
 
 #include <thread>
 #include <cassert>
@@ -15,7 +16,7 @@ namespace async { namespace impl
 
     Mutex::~Mutex()
     {
-        assert(State::unlocked == _state && _waiters.empty());
+        assert(State::unlocked == _state && empty());
     }
 
     void Mutex::lock()
@@ -25,8 +26,9 @@ namespace async { namespace impl
             return;
         }
 
-        Synchronizer *synchronizersBuffer[1] = {this};
-        Waiter waiter(synchronizersBuffer, 1);
+        SynchronizerWaiterNode synchronizerWaiterNodes[1];
+        synchronizerWaiterNodes[0]._syncronizer = this;
+        Waiter waiter(synchronizerWaiterNodes, 1);
 
         uint32_t waiterResult = waiter.any();
 
@@ -63,63 +65,47 @@ namespace async { namespace impl
 
     void Mutex::unlock()
     {
-//        std::cout<<"unlock\n"; std::cout.flush();
         for(;;)
         {
             State was = State::locked;
 
             if(_state.compare_exchange_strong(was, State::busy))
             {
-//                std::cout<<"unlock make busy\n"; std::cout.flush();
                 //wakeup next if exists
-                if(_waiters.empty())
+                if(empty())
                 {
                     //nobody
                     _state.store(State::unlocked);
-//                    std::cout<<"unlock make unlocked\n"; std::cout.flush();
                     return;
                 }
 
                 //notify waiters by queue, drop all notified, who accept notifications - stand locker
-                TVWaiters::iterator iter(_waiters.begin());
-                TVWaiters::iterator end(_waiters.end());
-
-                for(; iter != end; ++iter)
+                for(SynchronizerWaiterNode *node(dequeue()); node; node=dequeue())
                 {
-                    Waiter *waiter = *iter;
-                    if(waiter->notify(this, false))
+                    if(node->_waiter->notify(*node, false))
                     {
-                        ++iter;
-
                         //some one notified successfully
-                        _waiters.erase(_waiters.begin(), iter);
                         _state.store(State::locked);
-//                        std::cout<<"unlock make locked\n"; std::cout.flush();
                         return;
                     }
                 }
 
                 //no one
-                _waiters.clear();
                 _state.store(State::unlocked);
-//                std::cout<<"unlock make unlocked because nobody\n"; std::cout.flush();
                 return;
             }
 
             switch(was)
             {
             case State::unlocked:
-//                std::cout<<"unlock unable busy, unlocked\n"; std::cout.flush();
                 assert(!"unable to unlock already unlocked mutex");
                 return;
             case State::locked:
-//                std::cout<<"unlock unable busy, locked\n"; std::cout.flush();
                 //spurious failure, try one more
                 continue;
             case State::busy:
-//                std::cout<<"unlock unable busy, busy\n"; std::cout.flush();
                 //over thread make changes, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -128,27 +114,25 @@ namespace async { namespace impl
         }
     }
 
-    bool Mutex::waiterAdd(Waiter *waiter)
+    bool Mutex::waiterAdd(SynchronizerWaiterNode &node)
     {
-//        std::cout<<"waiterAdd\n"; std::cout.flush();
+        assert(this == node._syncronizer);
+
         for(;;)
         {
             State was = State::unlocked;
             if(_state.compare_exchange_weak(was, State::busy))
             {
-//                std::cout<<"waiteAdd, make busy\n"; std::cout.flush();
-                assert(_waiters.empty());
-                if(waiter->notify(this, true))
+                assert(empty());
+                if(node._waiter->notify(node, true))
                 {
                     //waiter notified successfully, his come locker
                     _state.store(State::locked);
-//                    std::cout<<"waiteAdd, make locked\n"; std::cout.flush();
                 }
                 else
                 {
                     //waiter already notified by 3rd side
                     _state.store(State::unlocked);
-//                    std::cout<<"waiteAdd, make unlocked\n"; std::cout.flush();
                 }
                 return false;
             }
@@ -156,26 +140,21 @@ namespace async { namespace impl
             switch(was)
             {
             case State::unlocked:
-//                std::cout<<"waiteAdd, unable busy, unlocked\n"; std::cout.flush();
-                assert(_waiters.empty());
+                assert(empty());
                 //spurious failure, try one more
                 continue;
             case State::busy:
-//                std::cout<<"waiteAdd, unable busy, busy\n"; std::cout.flush();
                 //over thread make changes, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             case State::locked:
-//                std::cout<<"waiteAdd, unable busy, locked\n"; std::cout.flush();
                 //already locked by over waiter, put to waiters queue
                 if(_state.compare_exchange_strong(was, State::busy))
                 {
-//                    std::cout<<"waiteAdd, locked, busy\n"; std::cout.flush();
-                    _waiters.push_back(waiter);
+                    enqueue(node);
 
                     //keep locked for over waiter
                     _state.store(State::locked);
-//                    std::cout<<"waiteAdd, make locked\n"; std::cout.flush();
                     return true;
                 }
 
@@ -191,9 +170,10 @@ namespace async { namespace impl
         return false;
     }
 
-    void Mutex::waiterDel(Waiter *waiter)
+    void Mutex::waiterDel(SynchronizerWaiterNode &node)
     {
-//        std::cout<<"waiteDel\n"; std::cout.flush();
+        assert(this == node._syncronizer);
+
         State was;
 
         for(;;)
@@ -201,29 +181,25 @@ namespace async { namespace impl
             was = State::unlocked;
             if(_state.compare_exchange_weak(was, State::busy))
             {
-//                std::cout<<"waiteDel, make busy\n"; std::cout.flush();
                 //busy mode enabled, stop loop, remove waiter from queue
                 break;
             }
 
             if(State::unlocked == was)
             {
-//                std::cout<<"waiteDel, unable busy, unlocked\n"; std::cout.flush();
                 //spurious failure in CAS, try one more
                 continue;
             }
 
             if(State::busy == was)
             {
-//                std::cout<<"waiteDel, unable busy, busy\n"; std::cout.flush();
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             }
 
             //locked by over waiter, do local busy-lock from him
             if(_state.compare_exchange_strong(was, State::busy))
             {
-//                std::cout<<"waiteDel, unable busy, locked, busy\n"; std::cout.flush();
                 //busy mode enabled, stop loop, remove waiter from queue, original lock state preserved in _was_
                 break;
             }
@@ -233,19 +209,11 @@ namespace async { namespace impl
         }
         //note, original lock state preserved in _was_
 
-        for(std::vector<Waiter *>::iterator iter(_waiters.begin()), end(_waiters.end()); iter != end; ++iter)
-        {
-            if(waiter == *iter)
-            {
-                _waiters.erase(iter);
-                break;
-            }
-        }
+        remove(node);
 
         assert(State::busy == _state.load());
         assert(State::busy != was);
         _state.store(was);
-//        std::cout<<"waiteDel, restore old\n"; std::cout.flush();
     }
 
 

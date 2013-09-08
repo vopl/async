@@ -1,5 +1,6 @@
 #include "async/impl/event.hpp"
 #include "async/impl/waiter.hpp"
+#include "async/impl/synchronizerWaiterNode.hpp"
 
 #include <thread>
 #include <cassert>
@@ -21,13 +22,14 @@ namespace async { namespace impl
         State was = State::signalled;
         if(_state.compare_exchange_strong(was, State::busy))
         {
-            assert(_waiters.empty());
+            assert(empty());
             _state.store(_autoReset ? State::nonsignalled : State::signalled);
             return;
         }
 
-        Synchronizer *synchronizersBuffer[1] = {this};
-        Waiter waiter(synchronizersBuffer, 1);
+        SynchronizerWaiterNode synchronizerWaiterNodes[1];
+        synchronizerWaiterNodes[0]._syncronizer = this;
+        Waiter waiter(synchronizerWaiterNodes, 1);
 
         uint32_t waiterResult = waiter.any();
 
@@ -46,7 +48,7 @@ namespace async { namespace impl
             if(_state.compare_exchange_strong(was, State::busy))
             {
                 //wakeup next if exists
-                if(_waiters.empty())
+                if(empty())
                 {
                     //nobody, keep signalled
                     _state.store(State::signalled);
@@ -57,42 +59,33 @@ namespace async { namespace impl
                 if(_autoReset)
                 {
                     //notify only one
-
-                    TVWaiters::iterator begin(_waiters.begin());
-                    TVWaiters::iterator iter(_waiters.end());
-
-                    do
+                    for(SynchronizerWaiterNode *node(dequeue()); node; node=dequeue())
                     {
-                        --iter;
-                        Waiter *waiter = *iter;
-                        if(waiter->notify(this, false))
+                        assert(this == node->_syncronizer);
+                        if(node->_waiter->notify(*node, false))
                         {
                             //some one notified successfully
-                            _waiters.resize(iter-begin);
                             _state.store(State::nonsignalled);
                             return 1;
                         }
                     }
-                    while(begin != iter);
 
                     //no one
-                    _waiters.clear();
                     _state.store(State::signalled);
                     return 0;
                 }
 
                 //notify all
                 size_t notifiedAmount(0);
-                for(Waiter *waiter: _waiters)
+                for(SynchronizerWaiterNode *node(dequeue()); node; node=dequeue())
                 {
-                    if(waiter->notify(this, false))
+                    if(node->_waiter->notify(*node, false))
                     {
-                        ++notifiedAmount;
+                        notifiedAmount++;
                     }
                 }
 
                 //all notified
-                _waiters.clear();
                 _state.store(State::signalled);
                 return notifiedAmount;
             }
@@ -107,7 +100,7 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -128,7 +121,7 @@ namespace async { namespace impl
             if(_state.compare_exchange_strong(was, State::busy))
             {
                 //wakeup next if exists
-                if(_waiters.empty())
+                if(empty())
                 {
                     //nobody, keep nonsignalled
                     _state.store(State::nonsignalled);
@@ -139,43 +132,32 @@ namespace async { namespace impl
                 if(_autoReset)
                 {
                     //notify only one
-
-                    TVWaiters::iterator begin(_waiters.begin());
-                    TVWaiters::iterator iter(_waiters.end());
-
-                    do
+                    for(SynchronizerWaiterNode *node(dequeue()); node; node=dequeue())
                     {
-                        --iter;
-                        Waiter *waiter = *iter;
-                        if(waiter->notify(this, false))
+                        if(node->_waiter->notify(*node, false))
                         {
                             //some one notified successfully
-                            _waiters.resize(iter-begin);
                             _state.store(State::nonsignalled);
                             return 1;
                         }
                     }
-                    while(begin != iter);
 
                     //no one
-                    _waiters.clear();
                     _state.store(State::nonsignalled);
                     return 0;
                 }
 
                 //notify all
                 size_t notifiedAmount(0);
-                for(Waiter *waiter: _waiters)
+                for(SynchronizerWaiterNode *node(dequeue()); node; node=dequeue())
                 {
-                    if(waiter->notify(this, false))
+                    if(node->_waiter->notify(*node, false))
                     {
-                        ++notifiedAmount;
+                        notifiedAmount++;
                     }
                 }
 
                 //all notified
-
-                _waiters.clear();
                 _state.store(State::nonsignalled);
                 return notifiedAmount;
             }
@@ -190,7 +172,7 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -265,15 +247,17 @@ namespace async { namespace impl
         return false;
     }
 
-    bool Event::waiterAdd(Waiter *waiter)
+    bool Event::waiterAdd(SynchronizerWaiterNode &node)
     {
+        assert(this == node._syncronizer);
+
         for(;;)
         {
             State was = State::signalled;
             if(_state.compare_exchange_weak(was, State::busy))
             {
-                assert(_waiters.empty());
-                if(waiter->notify(this, true))
+                assert(empty());
+                if(node._waiter->notify(node, true))
                 {
                     _state.store(_autoReset ? State::nonsignalled : State::signalled);
                 }
@@ -292,13 +276,13 @@ namespace async { namespace impl
                 continue;
             case State::busy:
                 //over thread make changes, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             case State::nonsignalled:
                 //already locked by over waiter, put to waiters queue
                 if(_state.compare_exchange_strong(was, State::busy))
                 {
-                    _waiters.push_back(waiter);
+                    enqueue(node);
 
                     //keep locked for over waiter
                     _state.store(State::nonsignalled);
@@ -317,8 +301,10 @@ namespace async { namespace impl
         return false;
     }
 
-    void Event::waiterDel(Waiter *waiter)
+    void Event::waiterDel(SynchronizerWaiterNode &node)
     {
+        assert(this == node._syncronizer);
+
         State was;
 
         for(;;)
@@ -333,7 +319,7 @@ namespace async { namespace impl
             if(State::busy == was)
             {
                 //busy by 3rd side, wait
-                std::this_thread::yield();
+                //std::this_thread::yield();
                 continue;
             }
 
@@ -357,20 +343,9 @@ namespace async { namespace impl
         }
         //note, original lock state preserved in _was_
 
-        for(std::vector<Waiter *>::iterator iter(_waiters.begin()), end(_waiters.end()); iter != end; ++iter)
+        if(node.queued())
         {
-            if(waiter == *iter)
-            {
-                std::vector<Waiter *>::iterator preEnd = end-1;
-
-                if(iter != preEnd)
-                {
-                    *iter = *preEnd;
-                }
-
-                _waiters.pop_back();
-                break;
-            }
+            remove(node);
         }
 
         assert(State::busy == _state.load());

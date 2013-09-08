@@ -26,8 +26,8 @@ namespace async { namespace impl
 
     private:
         virtual bool tryAcquire() override;
-        virtual bool waiterAdd(Waiter *waiter) override;
-        virtual void waiterDel(Waiter *waiter) override;
+        virtual bool waiterAdd(SynchronizerWaiterNode &node) override;
+        virtual void waiterDel(SynchronizerWaiterNode &node) override;
 
     private:
         enum class State
@@ -36,18 +36,9 @@ namespace async { namespace impl
             unlocked,
             locked,
             busy
-
         };
 
         std::atomic<State> _state;
-
-        typedef std::vector<Waiter *> TVWaiters;
-        TVWaiters _waiters;
-
-//Syncronizer
-//        std::mutex _mtx;
-//        std::deque<Waiter *> _waiters;
-
     };
 }}
 

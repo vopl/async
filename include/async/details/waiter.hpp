@@ -28,7 +28,7 @@ namespace async
             Waiter &operator=(const Waiter &other) = delete;
 
         public:
-            Waiter(impl::Synchronizer **synchronizersBuffer);
+            Waiter(impl::SynchronizerWaiterNode *synchronizerWaiterNodes);
             ~Waiter();
 
             uint32_t any();

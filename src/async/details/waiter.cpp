@@ -11,8 +11,8 @@
 
 namespace async { namespace details
 {
-    Waiter::Waiter(impl::Synchronizer **synchronizersBuffer)
-        : Base(synchronizersBuffer)
+    Waiter::Waiter(impl::SynchronizerWaiterNode *synchronizerWaiterNodes)
+        : Base(synchronizerWaiterNodes)
     {
     }
 

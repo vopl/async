@@ -5,6 +5,7 @@ using namespace std;
 #include "async/impl/event.hpp"
 #include "async/impl/mutex.hpp"
 #include "async/impl/waiter.hpp"
+#include "async/impl/synchronizerWaiterNode.hpp"
 
 int main()
 {
@@ -32,6 +33,7 @@ int main()
            ONE(Event)
            ONE(Mutex)
            ONE(Waiter)
+           ONE(SynchronizerWaiterNode)
 
 
            "}\n"

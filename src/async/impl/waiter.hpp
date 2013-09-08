@@ -16,6 +16,7 @@ namespace async
 namespace async { namespace impl
 {
     class Synchronizer;
+    class SynchronizerWaiterNode;
     class Mutex;
     class Event;
 
@@ -24,8 +25,8 @@ namespace async { namespace impl
     class Waiter
     {
     public:
-        Waiter(Synchronizer **synchronizersBuffer);
-        Waiter(Synchronizer **synchronizersBuffer, uint32_t synchronizersAmount);
+        Waiter(impl::SynchronizerWaiterNode *synchronizerWaiterNodes);
+        Waiter(impl::SynchronizerWaiterNode *synchronizerWaiterNodes, uint32_t synchronizerWaiterNodesAmount);
         ~Waiter();
 
         void push(Synchronizer *synchronizer);
@@ -40,7 +41,7 @@ namespace async { namespace impl
         friend class ::async::impl::Synchronizer;
         friend class ::async::impl::Event;
         friend class ::async::impl::Mutex;
-        bool notify(Synchronizer *notifier, bool guaranteeNonInactive);
+        bool notify(impl::SynchronizerWaiterNode &node, bool guaranteeNonInactive);
 
     private:
         std::atomic<uint32_t> _state;//mark or fired Synchronizer index
@@ -49,8 +50,8 @@ namespace async { namespace impl
         static const uint32_t markDeactivating = (uint32_t)-3;
         static const uint32_t markInactive = (uint32_t)-4;
 
-        Synchronizer **_synchronizersBuffer;
-        uint32_t _synchronizersAmount;
+        SynchronizerWaiterNode *_synchronizerWaiterNodes;
+        uint32_t _synchronizerWaiterNodesAmount;
 
         Coro *_coro;
     };
