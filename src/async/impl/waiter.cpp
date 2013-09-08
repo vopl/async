@@ -42,13 +42,27 @@ namespace async { namespace impl
     }
 
 
-    void Waiter::push(Synchronizer *synchronizer)
+    void Waiter::push(Event *event)
     {
-        impl::SynchronizerWaiterNode &node = _synchronizerWaiterNodes[_synchronizerWaiterNodesAmount];
-        node._right = 0;
-        node._left = 0;
-        node._syncronizer = synchronizer;
+        SynchronizerWaiterNode &node = _synchronizerWaiterNodes[_synchronizerWaiterNodesAmount];
+//        node._right = 0;
+//        node._left = 0;
         node._waiter = this;
+        node._synchronizer._event = event;
+        node._synchronizerType = SynchronizerWaiterNode::est_event;
+        node._synchronizerIndex = _synchronizerWaiterNodesAmount;
+
+        ++_synchronizerWaiterNodesAmount;
+    }
+
+    void Waiter::push(Mutex *mutex)
+    {
+        SynchronizerWaiterNode &node = _synchronizerWaiterNodes[_synchronizerWaiterNodesAmount];
+//        node._right = 0;
+//        node._left = 0;
+        node._waiter = this;
+        node._synchronizer._mutex = mutex;
+        node._synchronizerType = SynchronizerWaiterNode::est_mutex;
         node._synchronizerIndex = _synchronizerWaiterNodesAmount;
 
         ++_synchronizerWaiterNodesAmount;
@@ -67,7 +81,7 @@ namespace async { namespace impl
 
         for(uint32_t idxTry(offset); idxTry<_synchronizerWaiterNodesAmount; idxTry++)
         {
-            if(_synchronizerWaiterNodes[idxTry]._syncronizer->tryAcquire())
+            if(_synchronizerWaiterNodes[idxTry].tryAcquire())
             {
                 return idxTry;
             }
@@ -75,7 +89,7 @@ namespace async { namespace impl
 
         for(uint32_t idxTry(0); idxTry<offset; idxTry++)
         {
-            if(_synchronizerWaiterNodes[idxTry]._syncronizer->tryAcquire())
+            if(_synchronizerWaiterNodes[idxTry].tryAcquire())
             {
                 return idxTry;
             }
@@ -83,11 +97,11 @@ namespace async { namespace impl
 
         for(uint32_t idxAdd(0); idxAdd<_synchronizerWaiterNodesAmount; idxAdd++)
         {
-            if(!_synchronizerWaiterNodes[idxAdd]._syncronizer->waiterAdd(_synchronizerWaiterNodes[idxAdd]))
+            if(!_synchronizerWaiterNodes[idxAdd].waiterAdd(_synchronizerWaiterNodes[idxAdd]))
             {
                 for(uint32_t idxDel(0); idxDel<idxAdd; idxDel++)
                 {
-                    _synchronizerWaiterNodes[idxDel]._syncronizer->waiterDel(_synchronizerWaiterNodes[idxDel]);
+                    _synchronizerWaiterNodes[idxDel].waiterDel(_synchronizerWaiterNodes[idxDel]);
                 }
 
                 uint32_t notified = _state.load();
@@ -145,7 +159,7 @@ namespace async { namespace impl
 
         for(uint32_t i(0); i<_synchronizerWaiterNodesAmount; i++)
         {
-            _synchronizerWaiterNodes[i]._syncronizer->waiterDel(_synchronizerWaiterNodes[i]);
+            _synchronizerWaiterNodes[i].waiterDel(_synchronizerWaiterNodes[i]);
         }
 
         return _state.load();

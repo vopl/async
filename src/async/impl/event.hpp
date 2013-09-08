@@ -27,10 +27,10 @@ namespace async { namespace impl
         bool isSet();
         bool reset();
 
-    private:
-        virtual bool tryAcquire() override;
-        virtual bool waiterAdd(SynchronizerWaiterNode &node) override;
-        virtual void waiterDel(SynchronizerWaiterNode &node) override;
+    public:
+        bool tryAcquire();
+        bool waiterAdd(SynchronizerWaiterNode &node);
+        void waiterDel(SynchronizerWaiterNode &node);
 
     private:
         enum class State

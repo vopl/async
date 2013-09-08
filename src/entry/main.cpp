@@ -48,8 +48,8 @@ int lmain()
         async::ThreadPool tp(tu, 4);
 
         std::atomic<size_t> cnt(0);
-        size_t amount = 100;
-        size_t mult = 300*1000;
+        size_t amount = 1000;
+        size_t mult = 300*100;
         async::Event event0(true);
         char pad0[64];
         async::Event event1(true);
@@ -64,7 +64,7 @@ int lmain()
         event2.set();
         event3.set();
 
-#define TXTMAKE 0
+#define TXTMAKE 1
 #define TXTOUT 0
         for(size_t i(0); i<amount; i++)
         {

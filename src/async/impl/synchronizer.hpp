@@ -13,11 +13,6 @@ namespace async { namespace impl
     ////////////////////////////////////////////////////////////////////////////////
     class Synchronizer
     {
-    public:
-        virtual bool tryAcquire() = 0;
-        virtual bool waiterAdd(SynchronizerWaiterNode &node) = 0;
-        virtual void waiterDel(SynchronizerWaiterNode &node) = 0;
-
     protected:
         Synchronizer();
         ~Synchronizer();

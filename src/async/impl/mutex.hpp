@@ -24,10 +24,9 @@ namespace async { namespace impl
         bool isLocked();
         void unlock();
 
-    private:
-        virtual bool tryAcquire() override;
-        virtual bool waiterAdd(SynchronizerWaiterNode &node) override;
-        virtual void waiterDel(SynchronizerWaiterNode &node) override;
+    public:
+        bool waiterAdd(SynchronizerWaiterNode &node);
+        void waiterDel(SynchronizerWaiterNode &node);
 
     private:
         enum class State

@@ -179,6 +179,7 @@ set(SRC_IMPL
     ${PSRC}/impl/mutex.cpp
     ${PSRC}/impl/waiter.cpp
     ${PSRC}/impl/synchronizer.cpp
+    ${PSRC}/impl/synchronizerWaiterNode.cpp
     ${PSRC}/impl/sizeofImplGen.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})

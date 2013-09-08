@@ -10,6 +10,9 @@ namespace async { namespace impl
     class Synchronizer;
     class Waiter;
 
+    class Event;
+    class Mutex;
+
     ////////////////////////////////////////////////////////////////////////////////
     class SynchronizerWaiterNode
     {
@@ -21,29 +24,30 @@ namespace async { namespace impl
         SynchronizerWaiterNode *_right;
         SynchronizerWaiterNode *_left;
 
-        Synchronizer    *_syncronizer;
         Waiter          *_waiter;
+
+        union
+        {
+            Event *_event;
+            Mutex *_mutex;
+        } _synchronizer;
+
+        enum ESynchronizerType : uint8_t
+        {
+            est_event,
+            est_mutex,
+        } _synchronizerType;
+
         uint8_t         _synchronizerIndex;
 
-        SynchronizerWaiterNode()
-//            : _right()
-//            , _left()
-//            , _syncronizer()
-//            , _waiter()
-//            , _synchronizerIndex()
-        {
-        }
+        SynchronizerWaiterNode();
 
-        bool queued() const
-        {
-            if(_right)
-            {
-                assert(_left);
-                return true;
-            }
-            assert(!_left);
-            return false;
-        }
+        bool queued() const;
+
+        bool tryAcquire();
+        bool waiterAdd(SynchronizerWaiterNode &node);
+        void waiterDel(SynchronizerWaiterNode &node);
+
     };
 }}
 

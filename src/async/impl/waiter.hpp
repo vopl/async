@@ -29,7 +29,8 @@ namespace async { namespace impl
         Waiter(impl::SynchronizerWaiterNode *synchronizerWaiterNodes, uint32_t synchronizerWaiterNodesAmount);
         ~Waiter();
 
-        void push(Synchronizer *synchronizer);
+        void push(Event *event);
+        void push(Mutex *mutex);
 
         uint32_t any();
         void all();

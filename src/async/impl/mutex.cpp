@@ -27,7 +27,10 @@ namespace async { namespace impl
         }
 
         SynchronizerWaiterNode synchronizerWaiterNodes[1];
-        synchronizerWaiterNodes[0]._syncronizer = this;
+
+        synchronizerWaiterNodes[0]._synchronizer._mutex = this;
+        synchronizerWaiterNodes[0]._synchronizerType = SynchronizerWaiterNode::est_mutex;
+
         Waiter waiter(synchronizerWaiterNodes, 1);
 
         uint32_t waiterResult = waiter.any();
