@@ -26,11 +26,11 @@ namespace async { namespace impl
         uint8_t         _synchronizerIndex;
 
         SynchronizerWaiterNode()
-            : _right()
-            , _left()
-            , _syncronizer()
-            , _waiter()
-            , _synchronizerIndex()
+//            : _right()
+//            , _left()
+//            , _syncronizer()
+//            , _waiter()
+//            , _synchronizerIndex()
         {
         }
 

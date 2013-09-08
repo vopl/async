@@ -30,6 +30,8 @@ namespace async { namespace impl
     {
         for(uint32_t i(0); i<_synchronizerWaiterNodesAmount; i++)
         {
+            _synchronizerWaiterNodes[i]._right = 0;
+            _synchronizerWaiterNodes[i]._left = 0;
             _synchronizerWaiterNodes[i]._waiter = this;
             _synchronizerWaiterNodes[i]._synchronizerIndex = i;
         }
@@ -43,6 +45,8 @@ namespace async { namespace impl
     void Waiter::push(Synchronizer *synchronizer)
     {
         impl::SynchronizerWaiterNode &node = _synchronizerWaiterNodes[_synchronizerWaiterNodesAmount];
+        node._right = 0;
+        node._left = 0;
         node._syncronizer = synchronizer;
         node._waiter = this;
         node._synchronizerIndex = _synchronizerWaiterNodesAmount;

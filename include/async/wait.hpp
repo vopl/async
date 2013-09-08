@@ -11,7 +11,8 @@ namespace async
     uint32_t waitAny(Waitable &... waitables)
     {
         char synchronizerWaiterNodes[sizeof...(waitables) * sizeofImpl<impl::SynchronizerWaiterNode>::_value];
-        memset(synchronizerWaiterNodes, 0, sizeof(synchronizerWaiterNodes));
+        //memset(synchronizerWaiterNodes, 0, sizeof(synchronizerWaiterNodes));
+
         details::Waiter waiter(reinterpret_cast<impl::SynchronizerWaiterNode*>(synchronizerWaiterNodes));
         waiter.collectWaitables(waitables...);
 
