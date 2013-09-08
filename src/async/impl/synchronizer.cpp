@@ -27,10 +27,7 @@ namespace async { namespace impl
 
     void Synchronizer::enqueue(SynchronizerWaiterNode &node)
     {
-        assert(nullptr == node._left);
-        assert(nullptr == node._right);
-
-        assert(nullptr != node._syncronizer);
+        assert(nullptr != node._synchronizer._event);
         assert(nullptr != node._waiter);
 
         node._left = &_leftBank;
@@ -53,7 +50,7 @@ namespace async { namespace impl
 
         target->_left = target->_right = nullptr;
 
-        assert(nullptr != target->_syncronizer);
+        assert(nullptr != target->_synchronizer._event);
         assert(nullptr != target->_waiter);
 
         return target;
@@ -65,7 +62,7 @@ namespace async { namespace impl
         node._right->_left = node._left;
 
         node._left = node._right = nullptr;
-        assert(nullptr != node._syncronizer);
+        assert(nullptr != node._synchronizer._event);
         assert(nullptr != node._waiter);
     }
 }}

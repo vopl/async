@@ -63,7 +63,8 @@ namespace async { namespace impl
                     //notify only one
                     for(SynchronizerWaiterNode *node(dequeue()); node; node=dequeue())
                     {
-                        assert(this == node->_syncronizer);
+                        assert(SynchronizerWaiterNode::est_event == node->_synchronizerType);
+                        assert(this == node->_synchronizer._event);
                         if(node->_waiter->notify(*node, false))
                         {
                             //some one notified successfully
@@ -251,7 +252,8 @@ namespace async { namespace impl
 
     bool Event::waiterAdd(SynchronizerWaiterNode &node)
     {
-        assert(this == node._syncronizer);
+        assert(SynchronizerWaiterNode::est_event == node._synchronizerType);
+        assert(this == node._synchronizer._event);
 
         for(;;)
         {
@@ -305,7 +307,8 @@ namespace async { namespace impl
 
     void Event::waiterDel(SynchronizerWaiterNode &node)
     {
-        assert(this == node._syncronizer);
+        assert(SynchronizerWaiterNode::est_event == node._synchronizerType);
+        assert(this == node._synchronizer._event);
 
         State was;
 

@@ -119,7 +119,8 @@ namespace async { namespace impl
 
     bool Mutex::waiterAdd(SynchronizerWaiterNode &node)
     {
-        assert(this == node._syncronizer);
+        assert(SynchronizerWaiterNode::est_mutex == node._synchronizerType);
+        assert(this == node._synchronizer._mutex);
 
         for(;;)
         {
@@ -175,7 +176,8 @@ namespace async { namespace impl
 
     void Mutex::waiterDel(SynchronizerWaiterNode &node)
     {
-        assert(this == node._syncronizer);
+        assert(SynchronizerWaiterNode::est_mutex == node._synchronizerType);
+        assert(this == node._synchronizer._mutex);
 
         State was;
 
