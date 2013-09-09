@@ -64,7 +64,7 @@ int lmain()
         event2.set();
         event3.set();
 
-#define TXTMAKE 1
+#define TXTMAKE 0
 #define TXTOUT 0
         for(size_t i(0); i<amount; i++)
         {

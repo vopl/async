@@ -10,9 +10,23 @@
 #include <cassert>
 #include <iostream>
 #include <algorithm>
+#include <iostream>
 
 namespace async { namespace impl
 {
+    namespace
+    {
+//        std::atomic_int bocnt(0);
+        void backoff()
+        {
+//            if(!((++bocnt) % 100))
+//            {
+//                std::cout<<bocnt<<std::endl;
+//            }
+            std::this_thread::yield();
+        }
+    }
+
     Waiter::Waiter(impl::SynchronizerWaiterNode *synchronizerWaiterNodes)
         : _state(markActive)
         , _synchronizerWaiterNodes(synchronizerWaiterNodes)
@@ -30,8 +44,8 @@ namespace async { namespace impl
     {
         for(uint32_t i(0); i<_synchronizerWaiterNodesAmount; i++)
         {
-            _synchronizerWaiterNodes[i]._right = 0;
-            _synchronizerWaiterNodes[i]._left = 0;
+//            _synchronizerWaiterNodes[i]._right = 0;
+//            _synchronizerWaiterNodes[i]._left = 0;
             _synchronizerWaiterNodes[i]._waiter = this;
             _synchronizerWaiterNodes[i]._synchronizerIndex = i;
         }
@@ -108,6 +122,7 @@ namespace async { namespace impl
                 while(notified == markPreNotified)
                 {
                     //std::this_thread::yield();
+                    backoff();
                     notified = _state.load();
                 }
                 assert(notified < 1024);//1024 - maximum Syncronizers in progress for this waiter instance
@@ -138,6 +153,7 @@ namespace async { namespace impl
             case markPreNotified:
                 //some Syncronizer fired but not complete interactions, await
                 //std::this_thread::yield();
+                backoff();
                 continue;
             case markDeactivating:
             case markInactive:
@@ -232,6 +248,7 @@ namespace async { namespace impl
                     //context deactivating in progress, await inactive state
                     wasState = markInactive;
                     //std::this_thread::yield();
+                    backoff();
                     break;
                 case markInactive:
                     //context deactivated, try from inactive state

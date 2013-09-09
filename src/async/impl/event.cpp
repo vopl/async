@@ -4,9 +4,23 @@
 
 #include <thread>
 #include <cassert>
+#include <iostream>
 
 namespace async { namespace impl
 {
+    namespace
+    {
+//        std::atomic_int bocnt(0);
+        void backoff()
+        {
+//            if(!((++bocnt) % 100))
+//            {
+//                std::cout<<bocnt<<std::endl;
+//            }
+            std::this_thread::yield();
+        }
+    }
+
     Event::Event(bool autoReset)
         : _autoReset(autoReset)
         , _state(State::nonsignalled)
@@ -49,14 +63,6 @@ namespace async { namespace impl
 
             if(_state.compare_exchange_strong(was, State::busy))
             {
-                //wakeup next if exists
-                if(empty())
-                {
-                    //nobody, keep signalled
-                    _state.store(State::signalled);
-                    return 0;
-                }
-
                 //notify waiters by queue, depend on autoReset
                 if(_autoReset)
                 {
@@ -104,6 +110,7 @@ namespace async { namespace impl
             case State::busy:
                 //over thread make changes, wait
                 //std::this_thread::yield();
+                backoff();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -123,14 +130,6 @@ namespace async { namespace impl
 
             if(_state.compare_exchange_strong(was, State::busy))
             {
-                //wakeup next if exists
-                if(empty())
-                {
-                    //nobody, keep nonsignalled
-                    _state.store(State::nonsignalled);
-                    return 0;
-                }
-
                 //notify waiters by queue, depend on autoReset
                 if(_autoReset)
                 {
@@ -176,6 +175,7 @@ namespace async { namespace impl
             case State::busy:
                 //over thread make changes, wait
                 //std::this_thread::yield();
+                backoff();
                 continue;
             default:
                 assert(!"unknown mutex state");
@@ -281,6 +281,7 @@ namespace async { namespace impl
             case State::busy:
                 //over thread make changes, wait
                 //std::this_thread::yield();
+                backoff();
                 continue;
             case State::nonsignalled:
                 //already locked by over waiter, put to waiters queue
@@ -325,6 +326,7 @@ namespace async { namespace impl
             {
                 //busy by 3rd side, wait
                 //std::this_thread::yield();
+                backoff();
                 continue;
             }
 
